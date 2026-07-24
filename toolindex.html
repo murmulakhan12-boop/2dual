@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dual-Channel Call & ZIP Recording System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- JSZip and FileSaver for local ZIP creation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <!-- PeerJS for WebRTC Audio Streaming -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <style>
+    .pulse-red { animation: pulse 1.2s infinite; }
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.03); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
+
+  <!-- Remote Audio Playback Element -->
+  <audio id="remoteAudio" autoplay class="hidden"></audio>
+
+  <div class="w-full max-w-xl bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 relative overflow-hidden">
+    
+    <!-- PAGE 1: USER REGISTRATION -->
+    <div id="page-1" class="space-y-5">
+      <div class="border-b border-slate-700 pb-3">
+        <h2 class="text-2xl font-bold text-indigo-400">👤 User Registration</h2>
+        <p class="text-xs text-slate-400 mt-1">अपनी जानकारी दर्ज करके शुरू करें</p>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Name / नाम</label>
+          <input type="text" id="reg-name" placeholder="Enter your full name" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Gender / लिंग</label>
+          <select id="reg-gender" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+            <option value="">-- Select Gender --</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Language / भाषा</label>
+          <select id="reg-lang" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+            <option value="">-- Select Language --</option>
+            <option value="Santali">Santali</option>
+            <option value="Assamese">Assamese</option>
+            <option value="Bhojpuri">Bhojpuri</option>
+            <option value="Haryanvi">Haryanvi</option>
+            <option value="Chhattisgarhi">Chhattisgarhi</option>
+            <option value="Nepali">Nepali</option>
+            <option value="Marwadi">Marwadi</option>
+            <option value="Maithili">Maithili</option>
+            <option value="Bengali">Bengali</option>
+            <option value="Hindi">Hindi</option>
+          </select>
+        </div>
+
+        <button onclick="saveRegistrationAndProceed()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition mt-4 shadow-lg">
+          Start Setup ➔
+        </button>
+      </div>
+    </div>
+
+    <!-- PAGE 1B: GUEST / RECEIVER JOIN PAGE -->
+    <div id="page-guest-join" class="hidden space-y-5">
+      <div class="border-b border-slate-700 pb-3">
+        <h2 class="text-2xl font-bold text-emerald-400">🎙️ Join Recording Session</h2>
+        <p class="text-xs text-slate-300 mt-1">
+          Invited by <span id="guest-caller-name" class="font-semibold text-indigo-300">Caller</span> · Language: <span id="guest-caller-lang" class="font-semibold font-mono text-amber-300">SANTALI</span>
+        </p>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Your Name</label>
+          <input type="text" id="guest-name" placeholder="Enter your full name" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Your Gender</label>
+          <select id="guest-gender" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <button onclick="submitGuestJoin()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg transition shadow-lg mt-2">
+          Join Recording Room ➔
+        </button>
+      </div>
+    </div>
+
+    <!-- PAGE 2: MAIN DASHBOARD -->
+    <div id="page-2" class="hidden space-y-6">
+      <div class="flex justify-between items-start border-b border-slate-700 pb-3">
+        <div>
+          <h2 id="dash-user-name" class="text-xl font-bold text-slate-100">User Dashboard</h2>
+          <p id="dash-user-info" class="text-xs text-indigo-400 mt-0.5"></p>
+        </div>
+        <button onclick="resetProfile()" class="text-xs bg-rose-900/40 hover:bg-rose-800/60 text-rose-300 border border-rose-700/60 px-2.5 py-1 rounded-md transition flex items-center gap-1">
+          <span>🔄</span> Reset
+        </button>
+      </div>
+
+      <button onclick="switchPage(3)" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2 shadow-lg">
+        <span>🤝</span> Invite Partner
+      </button>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-center">
+          <p class="text-xs text-slate-400">Total Caller Calls</p>
+          <p id="count-caller" class="text-2xl font-bold text-indigo-400 mt-1">0</p>
+        </div>
+        <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-center">
+          <p class="text-xs text-slate-400">Total Receiver Calls</p>
+          <p id="count-receiver" class="text-2xl font-bold text-cyan-400 mt-1">0</p>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <h3 class="text-sm font-semibold text-slate-300">Previous Recording Data / History</h3>
+        <div id="history-list" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+          <p class="text-xs text-slate-500 text-center py-4 bg-slate-900/50 rounded-lg">कोई रिकॉर्डिंग हिस्ट्री मौजूद नहीं है।</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 3: PARTNER INVITATION -->
+    <div id="page-3" class="hidden space-y-5">
+      <div class="border-b border-slate-700 pb-3">
+        <h2 class="text-2xl font-bold text-indigo-400">👥 Invite Partner</h2>
+        <p class="text-xs text-slate-400 mt-1">लिंग विकल्प चुनें और लिंक तैयार करें</p>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Partner Gender Option</label>
+          <select id="partner-gender" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+            <option value="Any">Any Gender</option>
+            <option value="Male">Male Partner</option>
+            <option value="Female">Female Partner</option>
+          </select>
+        </div>
+
+        <button onclick="generateMeetingLink()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition shadow-lg">
+          Generate Meeting Link
+        </button>
+        <button onclick="switchPage(2)" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 font-medium py-2 rounded-lg text-sm">
+          ← Back to Dashboard
+        </button>
+      </div>
+    </div>
+
+    <!-- PAGE 4: PAIR ID & COPY LINK -->
+    <div id="page-4" class="hidden space-y-5 text-center">
+      <div class="border-b border-slate-700 pb-3">
+        <h2 class="text-2xl font-bold text-indigo-400">🔗 Link & Pair Details</h2>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl space-y-2">
+        <p class="text-xs text-slate-400">Generated Pair ID</p>
+        <p id="display-pair-id" class="text-xl font-mono font-bold text-emerald-400 tracking-wider">PAIR-000000</p>
+      </div>
+
+      <div class="space-y-3">
+        <button onclick="copyInviteLink()" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium py-2.5 rounded-lg border border-slate-600 transition flex items-center justify-center gap-2">
+          <span>📋</span> Copy Invite Link
+        </button>
+        
+        <button onclick="enterRecordingRoom()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg transition shadow-lg">
+          Enter Recording Room ➔
+        </button>
+      </div>
+    </div>
+
+    <!-- PAGE 5: LIVE RECORDING ROOM (SEPARATE CARDS) -->
+    <div id="page-5" class="hidden space-y-5">
+      <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-bold text-indigo-400">🎙️ Recording Room</h2>
+        </div>
+        <span id="rec-status-badge" class="text-xs bg-amber-900/60 text-amber-300 border border-amber-700 px-2.5 py-1 rounded-full">Connecting</span>
+      </div>
+
+      <!-- SEPARATE PARTICIPANTS DISPLAY CARDS -->
+      <div class="grid grid-cols-2 gap-3">
+        <!-- Caller Box -->
+        <div id="box-caller" class="bg-slate-900/90 border border-indigo-500/50 p-3 rounded-xl space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Caller (Host)</span>
+            <span id="caller-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          </div>
+          <p id="room-caller-name" class="text-sm font-semibold text-slate-100 truncate">Loading...</p>
+          <p id="caller-rec-indicator" class="text-[10px] text-slate-400 font-mono">Mic: Active</p>
+        </div>
+
+        <!-- Receiver Box -->
+        <div id="box-receiver" class="bg-slate-900/90 border border-cyan-500/50 p-3 rounded-xl space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">Receiver</span>
+            <span id="receiver-dot" class="w-2 h-2 rounded-full bg-amber-500"></span>
+          </div>
+          <p id="room-receiver-name" class="text-sm font-semibold text-slate-100 truncate">Waiting...</p>
+          <p id="receiver-rec-indicator" class="text-[10px] text-amber-400 font-mono">Connecting...</p>
+        </div>
+      </div>
+
+      <!-- Timer Banner -->
+      <div class="text-center bg-slate-900 border border-slate-700 py-4 rounded-xl space-y-2">
+        <p id="timer" class="text-4xl font-mono font-bold text-slate-100">00:00:00</p>
+        <p id="waiting-banner" class="text-xs text-amber-400 bg-amber-950/40 border border-amber-800/60 py-1.5 px-4 rounded-full font-medium inline-block">
+          ⏳ Waiting for partner connection…
+        </p>
+      </div>
+
+      <div class="text-center">
+        <p id="room-session-tag" class="text-xs font-mono tracking-widest text-slate-400 uppercase bg-slate-900/60 border border-slate-800 py-1.5 px-4 rounded-lg inline-block">
+          SESSION TAG
+        </p>
+      </div>
+
+      <!-- Controls (Visible to Host) -->
+      <div id="host-controls" class="flex gap-3">
+        <button id="btn-start-rec" onclick="startDualRecording()" disabled class="flex-1 bg-emerald-600 opacity-50 cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg">
+          ▶️ Start Recording
+        </button>
+        <button id="btn-stop-rec" onclick="stopDualRecording()" disabled class="flex-1 bg-rose-600 opacity-50 cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg">
+          ⏹️ Stop Recording
+        </button>
+      </div>
+
+      <!-- Downloads Output -->
+      <div id="download-section" class="hidden bg-slate-900 border border-slate-700 p-4 rounded-xl space-y-3">
+        <h3 class="text-sm font-semibold text-emerald-400 border-b border-slate-800 pb-1">✅ Audio Output Files Ready</h3>
+
+        <div class="space-y-2">
+          <div class="flex items-center justify-between bg-slate-800 p-2.5 rounded border border-slate-700">
+            <span class="text-xs text-indigo-300 font-medium">1. Local Voice Stream</span>
+            <a id="dl-local" download="Local_Audio.wav" class="text-xs bg-indigo-600 hover:bg-indigo-500 px-3 py-1.5 rounded font-medium">Download</a>
+          </div>
+
+          <div class="flex items-center justify-between bg-slate-800 p-2.5 rounded border border-slate-700">
+            <span class="text-xs text-cyan-300 font-medium">2. Remote Voice Stream</span>
+            <a id="dl-remote" download="Remote_Audio.wav" class="text-xs bg-cyan-600 hover:bg-cyan-500 px-3 py-1.5 rounded font-medium">Download</a>
+          </div>
+
+          <div class="flex items-center justify-between bg-slate-800 p-2.5 rounded border border-slate-700">
+            <span class="text-xs text-amber-300 font-medium">3. ZIP Package (Dual Channels)</span>
+            <button onclick="downloadCurrentZip()" class="text-xs bg-amber-600 hover:bg-amber-500 px-3 py-1.5 rounded font-medium">📦 Download ZIP</button>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="goToDashboardAndRefresh()" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 font-medium py-2 rounded-lg text-sm">
+        Return to Dashboard
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    let userData = {};
+    let currentPairId = '';
+    let isHost = true;
+    let peer = null;
+    let peerConn = null;
+    let localStream = null;
+    let remoteStream = null;
+
+    let localRecorder, remoteRecorder;
+    let localChunks = [], remoteChunks = [];
+    let localAudioBlob = null, remoteAudioBlob = null;
+    
+    let timerInterval;
+    let seconds = 0;
+
+    let callerCallsCount = 0;
+    let receiverCallsCount = 0;
+    let callHistory = [];
+
+    window.onload = function() {
+      loadSavedData();
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const pairFromUrl = urlParams.get('pair');
+      const callerFromUrl = urlParams.get('caller');
+      const langFromUrl = urlParams.get('lang');
+
+      if (pairFromUrl) {
+        isHost = false;
+        currentPairId = pairFromUrl;
+        document.getElementById('guest-caller-name').textContent = callerFromUrl || 'Caller';
+        document.getElementById('guest-caller-lang').textContent = langFromUrl || 'SANTALI';
+        switchPage('guest-join');
+      } else if (userData && userData.name) {
+        renderDashboard();
+        switchPage(2);
+      } else {
+        switchPage(1);
+      }
+    };
+
+    function switchPage(pageId) {
+      ['1', 'guest-join', '2', '3', '4', '5'].forEach(p => {
+        const el = document.getElementById(p === 'guest-join' ? 'page-guest-join' : `page-${p}`);
+        if (el) el.classList.add('hidden');
+      });
+      const target = pageId === 'guest-join' ? document.getElementById('page-guest-join') : document.getElementById(`page-${pageId}`);
+      if (target) target.classList.remove('hidden');
+    }
+
+    function saveRegistrationAndProceed() {
+      const name = document.getElementById('reg-name').value.trim();
+      const gender = document.getElementById('reg-gender').value;
+      const lang = document.getElementById('reg-lang').value;
+
+      if (!name || !gender || !lang) { alert('कृपया सभी जानकारी भरें।'); return; }
+      userData = { name, gender, lang };
+      localStorage.setItem('rec_user_profile', JSON.stringify(userData));
+      renderDashboard();
+      switchPage(2);
+    }
+
+    function renderDashboard() {
+      document.getElementById('dash-user-name').textContent = `Welcome, ${userData.name}`;
+      document.getElementById('dash-user-info').textContent = `Gender: ${userData.gender} | Language: ${userData.lang}`;
+      updateHistoryUI();
+    }
+
+    function generateMeetingLink() {
+      currentPairId = 'PAIR-' + Math.floor(100000 + Math.random() * 900000);
+      document.getElementById('display-pair-id').textContent = currentPairId;
+      switchPage(4);
+    }
+
+    function copyInviteLink() {
+      const inviteUrl = `${window.location.origin}${window.location.pathname}?pair=${currentPairId}&lang=${encodeURIComponent(userData.lang)}&caller=${encodeURIComponent(userData.name)}`;
+      navigator.clipboard.writeText(inviteUrl);
+      alert('Invite Link Copied:\n' + inviteUrl);
+    }
+
+    async function enterRecordingRoom() {
+      isHost = true;
+      switchPage(5);
+
+      document.getElementById('room-caller-name').textContent = `${userData.name} (You)`;
+      document.getElementById('room-receiver-name').textContent = `Waiting for partner...`;
+      document.getElementById('room-session-tag').textContent = `${currentPairId} · ${(userData.lang || 'SANTALI').toUpperCase()}`;
+      document.getElementById('host-controls').classList.remove('hidden');
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch(e) {
+        alert("Microphone permission needed!");
+        return;
+      }
+
+      peer = new Peer(currentPairId);
+
+      peer.on('connection', (conn) => {
+        peerConn = conn;
+        setupDataConnection();
+      });
+
+      peer.on('call', (call) => {
+        call.answer(localStream);
+        call.on('stream', (rStream) => {
+          remoteStream = rStream;
+          document.getElementById('remoteAudio').srcObject = rStream;
+          markConnectedState();
+        });
+      });
+    }
+
+    async function submitGuestJoin() {
+      const name = document.getElementById('guest-name').value.trim();
+      const gender = document.getElementById('guest-gender').value;
+      if (!name) return alert('अपना नाम दर्ज करें');
+      
+      userData.name = name;
+      userData.gender = gender;
+      switchPage(5);
+
+      const urlParams = new URLSearchParams(window.location.search);
+      document.getElementById('room-caller-name').textContent = urlParams.get('caller') || 'Caller';
+      document.getElementById('room-receiver-name').textContent = `${userData.name} (You)`;
+      document.getElementById('room-session-tag').textContent = `${currentPairId} · ${(urlParams.get('lang') || 'SANTALI').toUpperCase()}`;
+      document.getElementById('host-controls').classList.add('hidden');
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch(e) {
+        alert("Microphone permission needed!");
+        return;
+      }
+
+      peer = new Peer();
+
+      peer.on('open', () => {
+        peerConn = peer.connect(currentPairId);
+        setupDataConnection();
+
+        const call = peer.call(currentPairId, localStream);
+        call.on('stream', (rStream) => {
+          remoteStream = rStream;
+          document.getElementById('remoteAudio').srcObject = rStream;
+          markConnectedState();
+        });
+      });
+    }
+
+    function setupDataConnection() {
+      peerConn.on('open', () => {
+        peerConn.send({ type: 'JOINED', name: userData.name });
+      });
+
+      peerConn.on('data', (data) => {
+        if (data.type === 'JOINED') {
+          if (isHost) document.getElementById('room-receiver-name').textContent = data.name;
+          markConnectedState();
+        } else if (data.type === 'START_REC') {
+          executeStartRecording();
+        } else if (data.type === 'STOP_REC') {
+          executeStopRecording();
+        }
+      });
+    }
+
+    function markConnectedState() {
+      document.getElementById('receiver-dot').className = "w-2 h-2 rounded-full bg-emerald-500";
+      document.getElementById('receiver-rec-indicator').textContent = "Ready";
+      document.getElementById('receiver-rec-indicator').className = "text-[10px] text-emerald-400 font-mono";
+
+      document.getElementById('rec-status-badge').textContent = "Connected";
+      document.getElementById('rec-status-badge').className = "text-xs bg-emerald-900/60 text-emerald-300 border border-emerald-700 px-2.5 py-1 rounded-full";
+
+      const banner = document.getElementById('waiting-banner');
+      banner.textContent = "🟢 Partner Connected! Ready for Dual Recording.";
+      banner.className = "text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
+
+      if (isHost) {
+        const btn = document.getElementById('btn-start-rec');
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    function startDualRecording() {
+      if (peerConn) peerConn.send({ type: 'START_REC' });
+      executeStartRecording();
+    }
+
+    function executeStartRecording() {
+      localChunks = [];
+      remoteChunks = [];
+
+      localRecorder = new MediaRecorder(localStream);
+      localRecorder.ondataavailable = e => localChunks.push(e.data);
+      localRecorder.start();
+
+      if (remoteStream) {
+        remoteRecorder = new MediaRecorder(remoteStream);
+        remoteRecorder.ondataavailable = e => remoteChunks.push(e.data);
+        remoteRecorder.start();
+      }
+
+      startTimer();
+
+      document.getElementById('rec-status-badge').textContent = "● Recording";
+      document.getElementById('rec-status-badge').className = "text-xs bg-rose-900/60 text-rose-300 border border-rose-700 px-2.5 py-1 rounded-full pulse-red";
+
+      document.getElementById('caller-rec-indicator').textContent = "🔴 Recording On";
+      document.getElementById('caller-rec-indicator').className = "text-[10px] text-rose-400 font-mono pulse-red";
+
+      document.getElementById('receiver-rec-indicator').textContent = "🔴 Recording On";
+      document.getElementById('receiver-rec-indicator').className = "text-[10px] text-rose-400 font-mono pulse-red";
+
+      const banner = document.getElementById('waiting-banner');
+      banner.textContent = "🔴 Dual-Channel Live Recording Active";
+      banner.className = "text-xs text-rose-400 bg-rose-950/40 border border-rose-800/60 py-1.5 px-4 rounded-full inline-block font-medium pulse-red";
+
+      if (isHost) {
+        document.getElementById('btn-start-rec').disabled = true;
+        document.getElementById('btn-start-rec').classList.add('opacity-50');
+        document.getElementById('btn-stop-rec').disabled = false;
+        document.getElementById('btn-stop-rec').classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    function stopDualRecording() {
+      if (peerConn) peerConn.send({ type: 'STOP_REC' });
+      executeStopRecording();
+    }
+
+    function executeStopRecording() {
+      stopTimer();
+
+      if (localRecorder && localRecorder.state !== 'inactive') localRecorder.stop();
+      if (remoteRecorder && remoteRecorder.state !== 'inactive') remoteRecorder.stop();
+
+      setTimeout(async () => {
+        localAudioBlob = new Blob(localChunks, { type: 'audio/wav' });
+        remoteAudioBlob = new Blob(remoteChunks, { type: 'audio/wav' });
+
+        document.getElementById('dl-local').href = URL.createObjectURL(localAudioBlob);
+        document.getElementById('dl-remote').href = URL.createObjectURL(remoteAudioBlob);
+        document.getElementById('download-section').classList.remove('hidden');
+
+        if (isHost) callerCallsCount++;
+        else receiverCallsCount++;
+
+        const localBase64 = await blobToBase64(localAudioBlob);
+        const remoteBase64 = remoteAudioBlob ? await blobToBase64(remoteAudioBlob) : localBase64;
+
+        const record = {
+          id: currentPairId,
+          user: userData.name || 'User',
+          lang: userData.lang || 'SANTALI',
+          duration: document.getElementById('timer').textContent,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          localData: localBase64,
+          remoteData: remoteBase64
+        };
+
+        callHistory.unshift(record);
+        saveHistoryData();
+        updateHistoryUI();
+      }, 500);
+
+      document.getElementById('rec-status-badge').textContent = "Stopped";
+      document.getElementById('rec-status-badge').className = "text-xs bg-slate-700 px-2.5 py-1 rounded-full text-slate-400";
+
+      document.getElementById('caller-rec-indicator').textContent = "Mic: Idle";
+      document.getElementById('caller-rec-indicator').className = "text-[10px] text-slate-400 font-mono";
+
+      document.getElementById('receiver-rec-indicator').textContent = "Mic: Idle";
+      document.getElementById('receiver-rec-indicator').className = "text-[10px] text-slate-400 font-mono";
+
+      const banner = document.getElementById('waiting-banner');
+      banner.textContent = "⏹️ Dual Recording Completed";
+      banner.className = "text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
+
+      if (isHost) {
+        document.getElementById('btn-start-rec').disabled = false;
+        document.getElementById('btn-start-rec').classList.remove('opacity-50');
+        document.getElementById('btn-stop-rec').disabled = true;
+        document.getElementById('btn-stop-rec').classList.add('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    function startTimer() {
+      seconds = 0;
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        seconds++;
+        const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
+        const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+        const secs = String(seconds % 60).padStart(2, '0');
+        document.getElementById('timer').textContent = `${hrs}:${mins}:${secs}`;
+      }, 1000);
+    }
+
+    function stopTimer() { clearInterval(timerInterval); }
+
+    function blobToBase64(blob) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    function downloadCurrentZip() {
+      if (!localAudioBlob) return alert("Audio files missing.");
+      const zip = new JSZip();
+      
+      const hostName = isHost ? "Caller" : "Receiver";
+      const remoteName = isHost ? "Receiver" : "Caller";
+
+      zip.file(`${hostName}_Audio_${currentPairId}.wav`, localAudioBlob);
+      if (remoteAudioBlob) {
+        zip.file(`${remoteName}_Audio_${currentPairId}.wav`, remoteAudioBlob);
+      }
+
+      zip.generateAsync({ type: "blob" }).then(content => {
+        saveAs(content, `${currentPairId}_DualAudio.zip`);
+      });
+    }
+
+    function downloadHistoryZip(index) {
+      const record = callHistory[index];
+      if (!record || !record.localData) return alert("Audio record missing.");
+
+      const zip = new JSZip();
+      const localBlob = dataURItoBlob(record.localData);
+      const remoteBlob = record.remoteData ? dataURItoBlob(record.remoteData) : localBlob;
+
+      zip.file(`Caller_Audio_${record.id}.wav`, localBlob);
+      zip.file(`Receiver_Audio_${record.id}.wav`, remoteBlob);
+
+      zip.generateAsync({ type: "blob" }).then(content => {
+        saveAs(content, `${record.id}_${record.lang}_DualAudio.zip`);
+      });
+    }
+
+    function dataURItoBlob(dataURI) {
+      const byteString = atob(dataURI.split(',')[1]);
+      const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+      return new Blob([ab], { type: mimeString });
+    }
+
+    function saveHistoryData() {
+      localStorage.setItem('rec_caller_count', callerCallsCount);
+      localStorage.setItem('rec_receiver_count', receiverCallsCount);
+      try {
+        localStorage.setItem('rec_history_list', JSON.stringify(callHistory.slice(0, 10)));
+      } catch(e) {}
+    }
+
+    function loadSavedData() {
+      const prof = localStorage.getItem('rec_user_profile');
+      if (prof) userData = JSON.parse(prof);
+
+      callerCallsCount = parseInt(localStorage.getItem('rec_caller_count')) || 0;
+      receiverCallsCount = parseInt(localStorage.getItem('rec_receiver_count')) || 0;
+
+      const hist = localStorage.getItem('rec_history_list');
+      if (hist) callHistory = JSON.parse(hist);
+    }
+
+    function updateHistoryUI() {
+      document.getElementById('count-caller').textContent = callerCallsCount;
+      document.getElementById('count-receiver').textContent = receiverCallsCount;
+
+      const historyList = document.getElementById('history-list');
+      if (!callHistory || callHistory.length === 0) {
+        historyList.innerHTML = `<p class="text-xs text-slate-500 text-center py-4 bg-slate-900/50 rounded-lg">कोई रिकॉर्डिंग हिस्ट्री मौजूद नहीं है।</p>`;
+        return;
+      }
+
+      historyList.innerHTML = callHistory.map((rec, i) => `
+        <div class="bg-slate-900/90 border border-slate-700/80 p-3 rounded-xl flex items-center justify-between text-xs transition hover:border-slate-600">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="font-mono font-bold text-indigo-400">${rec.id}</span>
+              <span class="bg-slate-800 text-amber-300 font-mono text-[10px] px-2 py-0.5 rounded border border-slate-700">${rec.lang}</span>
+            </div>
+            <p class="text-slate-400 text-[11px]">⏱️ ${rec.duration} | 🕒 ${rec.time}</p>
+          </div>
+          <button onclick="downloadHistoryZip(${i})" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1">
+            <span>📦</span> ZIP
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function goToDashboardAndRefresh() {
+      renderDashboard();
+      switchPage(2);
+    }
+
+    function resetProfile() {
+      if (confirm('क्या आप प्रोफाइल रीसेट करना चाहते हैं?')) {
+        localStorage.clear();
+        location.reload();
+      }
+    }
+  </script>
+</body>
+</html>
