@@ -202,7 +202,7 @@
             <span id="caller-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
           </div>
           <p id="room-caller-name" class="text-sm font-semibold text-slate-100 truncate">Loading...</p>
-          <p id="caller-rec-indicator" class="text-[10px] text-slate-400 font-mono">Mic: Active</p>
+          <p id="caller-rec-indicator" class="text-[10px] text-emerald-400 font-mono">🔇 Noise Filter Active</p>
         </div>
 
         <div id="box-receiver" class="bg-slate-900/90 border border-cyan-500/50 p-3 rounded-xl space-y-1">
@@ -229,7 +229,7 @@
         </p>
       </div>
 
-      <!-- Controls (Host Controls & Disconnect Button) -->
+      <!-- Controls -->
       <div class="space-y-2">
         <div id="host-controls" class="flex gap-3">
           <button id="btn-start-rec" onclick="startDualRecording()" disabled class="flex-1 bg-emerald-600 opacity-50 cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg">
@@ -240,7 +240,6 @@
           </button>
         </div>
 
-        <!-- Disconnect Call Button for both Users -->
         <button id="btn-disconnect" onclick="disconnectCall(true)" class="w-full bg-rose-900/80 hover:bg-rose-800 text-rose-200 border border-rose-700 font-semibold py-2.5 rounded-lg transition shadow-md flex items-center justify-center gap-2">
           <span>📞</span> Disconnect Call / End Session
         </button>
@@ -252,17 +251,17 @@
 
         <div class="space-y-2">
           <div class="flex items-center justify-between bg-slate-800 p-2.5 rounded border border-slate-700">
-            <span class="text-xs text-indigo-300 font-medium">1. Local Voice Stream</span>
+            <span class="text-xs text-indigo-300 font-medium">1. Local Voice Stream (Clean)</span>
             <a id="dl-local" download="Local_Audio.wav" class="text-xs bg-indigo-600 hover:bg-indigo-500 px-3 py-1.5 rounded font-medium">Download</a>
           </div>
 
           <div class="flex items-center justify-between bg-slate-800 p-2.5 rounded border border-slate-700">
-            <span class="text-xs text-cyan-300 font-medium">2. Remote Voice Stream</span>
+            <span class="text-xs text-cyan-300 font-medium">2. Remote Voice Stream (Clean)</span>
             <a id="dl-remote" download="Remote_Audio.wav" class="text-xs bg-cyan-600 hover:bg-cyan-500 px-3 py-1.5 rounded font-medium">Download</a>
           </div>
 
           <div class="flex items-center justify-between bg-slate-800 p-2.5 rounded border border-slate-700">
-            <span class="text-xs text-amber-300 font-medium">3. ZIP Package (Dual Channels)</span>
+            <span class="text-xs text-amber-300 font-medium">3. ZIP Package (Dual Clean Audio)</span>
             <button onclick="downloadCurrentZip()" class="text-xs bg-amber-600 hover:bg-amber-500 px-3 py-1.5 rounded font-medium">📦 Download ZIP</button>
           </div>
         </div>
@@ -298,6 +297,19 @@
     let receiverCallsCount = 0;
     let callHistory = [];
 
+    // 🔥 HELPER FUNCTION: GET CLEAN NOISE-FREE AUDIO STREAM
+    async function getCleanAudioStream() {
+      return await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,        // इको/गूंज को दूर करेगा
+          noiseSuppression: true,        // बैकग्राउंड की फालतू शोर-शराबे को दबाएगा
+          autoGainControl: true,         // आवाज़ के लेवल को साफ़ रखेगा
+          sampleRate: 48000,
+          channelCount: 1
+        }
+      });
+    }
+
     window.onload = function() {
       loadSavedData();
 
@@ -309,9 +321,14 @@
       if (pairFromUrl) {
         isHost = false;
         currentPairId = pairFromUrl;
-        document.getElementById('guest-caller-name').textContent = callerFromUrl || 'Caller';
-        document.getElementById('guest-caller-lang').textContent = langFromUrl || 'SANTALI';
-        switchPage('guest-join');
+        
+        if (userData && userData.name) {
+          startDirectGuestJoin(pairFromUrl, callerFromUrl, langFromUrl);
+        } else {
+          document.getElementById('guest-caller-name').textContent = callerFromUrl || 'Caller';
+          document.getElementById('guest-caller-lang').textContent = langFromUrl || 'SANTALI';
+          switchPage('guest-join');
+        }
       } else if (userData && userData.name) {
         renderDashboard();
         switchPage(2);
@@ -370,7 +387,7 @@
       document.getElementById('host-controls').classList.remove('hidden');
 
       try {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        localStream = await getCleanAudioStream(); // Noise Cancelled Mic
       } catch(e) {
         alert("Microphone permission needed!");
         return;
@@ -394,24 +411,17 @@
       });
     }
 
-    async function submitGuestJoin() {
-      const name = document.getElementById('guest-name').value.trim();
-      const gender = document.getElementById('guest-gender').value;
-      if (!name) return alert('अपना नाम दर्ज करें');
-      
-      userData.name = name;
-      userData.gender = gender;
+    async function startDirectGuestJoin(pairId, callerName, langName) {
       historySaved = false;
       switchPage(5);
 
-      const urlParams = new URLSearchParams(window.location.search);
-      document.getElementById('room-caller-name').textContent = urlParams.get('caller') || 'Caller';
+      document.getElementById('room-caller-name').textContent = callerName || 'Caller';
       document.getElementById('room-receiver-name').textContent = `${userData.name} (You)`;
-      document.getElementById('room-session-tag').textContent = `${currentPairId} · ${(urlParams.get('lang') || 'SANTALI').toUpperCase()}`;
+      document.getElementById('room-session-tag').textContent = `${pairId} · ${(langName || 'SANTALI').toUpperCase()}`;
       document.getElementById('host-controls').classList.add('hidden');
 
       try {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        localStream = await getCleanAudioStream(); // Noise Cancelled Mic
       } catch(e) {
         alert("Microphone permission needed!");
         return;
@@ -420,16 +430,29 @@
       peer = new Peer();
 
       peer.on('open', () => {
-        peerConn = peer.connect(currentPairId);
+        peerConn = peer.connect(pairId);
         setupDataConnection();
 
-        currentCall = peer.call(currentPairId, localStream);
+        currentCall = peer.call(pairId, localStream);
         currentCall.on('stream', (rStream) => {
           remoteStream = rStream;
           document.getElementById('remoteAudio').srcObject = rStream;
           markConnectedState();
         });
       });
+    }
+
+    async function submitGuestJoin() {
+      const name = document.getElementById('guest-name').value.trim();
+      const gender = document.getElementById('guest-gender').value;
+      if (!name) return alert('अपना नाम दर्ज करें');
+      
+      userData.name = name;
+      userData.gender = gender;
+      localStorage.setItem('rec_user_profile', JSON.stringify(userData));
+
+      const urlParams = new URLSearchParams(window.location.search);
+      startDirectGuestJoin(currentPairId, urlParams.get('caller'), urlParams.get('lang'));
     }
 
     function setupDataConnection() {
@@ -457,14 +480,14 @@
 
     function markConnectedState() {
       document.getElementById('receiver-dot').className = "w-2 h-2 rounded-full bg-emerald-500";
-      document.getElementById('receiver-rec-indicator').textContent = "Ready";
+      document.getElementById('receiver-rec-indicator').textContent = "🔇 Noise Filter Active";
       document.getElementById('receiver-rec-indicator').className = "text-[10px] text-emerald-400 font-mono";
 
       document.getElementById('rec-status-badge').textContent = "Connected";
       document.getElementById('rec-status-badge').className = "text-xs bg-emerald-900/60 text-emerald-300 border border-emerald-700 px-2.5 py-1 rounded-full";
 
       const banner = document.getElementById('waiting-banner');
-      banner.textContent = "🟢 Partner Connected! Ready for Dual Recording.";
+      banner.textContent = "🟢 Partner Connected! Clear Noise-Free Audio Active.";
       banner.className = "text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
 
       if (isHost) {
@@ -500,14 +523,14 @@
       document.getElementById('rec-status-badge').textContent = "● Recording";
       document.getElementById('rec-status-badge').className = "text-xs bg-rose-900/60 text-rose-300 border border-rose-700 px-2.5 py-1 rounded-full pulse-red";
 
-      document.getElementById('caller-rec-indicator').textContent = "🔴 Recording On";
+      document.getElementById('caller-rec-indicator').textContent = "🔴 Recording On (Clean)";
       document.getElementById('caller-rec-indicator').className = "text-[10px] text-rose-400 font-mono pulse-red";
 
-      document.getElementById('receiver-rec-indicator').textContent = "🔴 Recording On";
+      document.getElementById('receiver-rec-indicator').textContent = "🔴 Recording On (Clean)";
       document.getElementById('receiver-rec-indicator').className = "text-[10px] text-rose-400 font-mono pulse-red";
 
       const banner = document.getElementById('waiting-banner');
-      banner.textContent = "🔴 Dual-Channel Live Recording Active";
+      banner.textContent = "🔴 Live Noise-Filtered Dual Recording Active";
       banner.className = "text-xs text-rose-400 bg-rose-950/40 border border-rose-800/60 py-1.5 px-4 rounded-full inline-block font-medium pulse-red";
 
       if (isHost) {
@@ -545,7 +568,7 @@
       document.getElementById('receiver-rec-indicator').className = "text-[10px] text-slate-400 font-mono";
 
       const banner = document.getElementById('waiting-banner');
-      banner.textContent = "⏹️ Dual Recording Completed & Saved";
+      banner.textContent = "⏹️ Clean Recording Completed & Saved";
       banner.className = "text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
 
       if (isHost) {
