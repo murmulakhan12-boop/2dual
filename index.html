@@ -22,7 +22,7 @@
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
 
   <!-- Remote Audio Playback Element -->
-  <audio id="remoteAudio" autoplay class="hidden"></audio>
+  <audio id="remoteAudio" autoplay playsinline class="hidden"></audio>
 
   <div class="w-full max-w-xl bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 relative overflow-hidden">
     
@@ -191,7 +191,7 @@
         <div>
           <h2 class="text-xl font-bold text-indigo-400">🎙️ Recording Room</h2>
         </div>
-        <span id="rec-status-badge" class="text-xs bg-amber-900/60 text-amber-300 border border-amber-700 px-2.5 py-1 rounded-full">Connecting</span>
+        <span id="rec-status-badge" class="text-xs bg-amber-900/60 text-amber-300 border border-amber-700 px-2.5 py-1 rounded-full">Connecting...</span>
       </div>
 
       <!-- PARTICIPANTS DISPLAY CARDS -->
@@ -289,6 +289,7 @@
     let localAudioBlob = null, remoteAudioBlob = null;
     let isRecording = false;
     let historySaved = false;
+    let userDisconnectedManual = false;
     
     let timerInterval;
     let seconds = 0;
@@ -297,15 +298,24 @@
     let receiverCallsCount = 0;
     let callHistory = [];
 
-    // 🔥 HELPER FUNCTION: GET CLEAN NOISE-FREE AUDIO STREAM
+    // PeerJS Options with Google STUN Servers (Fixes NAT/Firewall blocking)
+    const peerOptions = {
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' }
+        ]
+      }
+    };
+
     async function getCleanAudioStream() {
       return await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation: true,        // इको/गूंज को दूर करेगा
-          noiseSuppression: true,        // बैकग्राउंड की फालतू शोर-शराबे को दबाएगा
-          autoGainControl: true,         // आवाज़ के लेवल को साफ़ रखेगा
-          sampleRate: 48000,
-          channelCount: 1
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: 48000
         }
       });
     }
@@ -379,6 +389,7 @@
     async function enterRecordingRoom() {
       isHost = true;
       historySaved = false;
+      userDisconnectedManual = false;
       switchPage(5);
 
       document.getElementById('room-caller-name').textContent = `${userData.name} (You)`;
@@ -387,13 +398,46 @@
       document.getElementById('host-controls').classList.remove('hidden');
 
       try {
-        localStream = await getCleanAudioStream(); // Noise Cancelled Mic
+        localStream = await getCleanAudioStream();
       } catch(e) {
         alert("Microphone permission needed!");
         return;
       }
 
-      peer = new Peer(currentPairId);
+      initializePeer(currentPairId);
+    }
+
+    async function startDirectGuestJoin(pairId, callerName, langName) {
+      historySaved = false;
+      userDisconnectedManual = false;
+      switchPage(5);
+
+      document.getElementById('room-caller-name').textContent = callerName || 'Caller';
+      document.getElementById('room-receiver-name').textContent = `${userData.name} (You)`;
+      document.getElementById('room-session-tag').textContent = `${pairId} · ${(langName || 'SANTALI').toUpperCase()}`;
+      document.getElementById('host-controls').classList.add('hidden');
+
+      try {
+        localStream = await getCleanAudioStream();
+      } catch(e) {
+        alert("Microphone permission needed!");
+        return;
+      }
+
+      initializePeer(null, pairId);
+    }
+
+    // 🔧 ROBUST PEERJS & ICE CONNECTION MANAGEMENT
+    function initializePeer(customId = null, targetPairId = null) {
+      if (peer) { try { peer.destroy(); } catch(e){} }
+
+      peer = customId ? new Peer(customId, peerOptions) : new Peer(peerOptions);
+
+      peer.on('open', (id) => {
+        if (!isHost && targetPairId) {
+          setTimeout(() => connectToHost(targetPairId), 500);
+        }
+      });
 
       peer.on('connection', (conn) => {
         peerConn = conn;
@@ -405,41 +449,43 @@
         call.answer(localStream);
         call.on('stream', (rStream) => {
           remoteStream = rStream;
-          document.getElementById('remoteAudio').srcObject = rStream;
+          const remoteEl = document.getElementById('remoteAudio');
+          remoteEl.srcObject = rStream;
+          remoteEl.play().catch(e => console.log("Audio play error:", e));
           markConnectedState();
         });
+      });
+
+      peer.on('disconnected', () => {
+        if (!userDisconnectedManual && peer && !peer.destroyed) {
+          peer.reconnect();
+        }
+      });
+
+      peer.on('error', (err) => {
+        console.warn("Peer Error: ", err.type);
+        if (err.type === 'peer-unavailable' && !isHost) {
+          setTimeout(() => connectToHost(targetPairId), 2000);
+        }
       });
     }
 
-    async function startDirectGuestJoin(pairId, callerName, langName) {
-      historySaved = false;
-      switchPage(5);
+    function connectToHost(targetPairId) {
+      if (!peer || peer.destroyed) return;
 
-      document.getElementById('room-caller-name').textContent = callerName || 'Caller';
-      document.getElementById('room-receiver-name').textContent = `${userData.name} (You)`;
-      document.getElementById('room-session-tag').textContent = `${pairId} · ${(langName || 'SANTALI').toUpperCase()}`;
-      document.getElementById('host-controls').classList.add('hidden');
+      peerConn = peer.connect(targetPairId, { reliable: true });
+      setupDataConnection();
 
-      try {
-        localStream = await getCleanAudioStream(); // Noise Cancelled Mic
-      } catch(e) {
-        alert("Microphone permission needed!");
-        return;
-      }
-
-      peer = new Peer();
-
-      peer.on('open', () => {
-        peerConn = peer.connect(pairId);
-        setupDataConnection();
-
-        currentCall = peer.call(pairId, localStream);
+      currentCall = peer.call(targetPairId, localStream);
+      if (currentCall) {
         currentCall.on('stream', (rStream) => {
           remoteStream = rStream;
-          document.getElementById('remoteAudio').srcObject = rStream;
+          const remoteEl = document.getElementById('remoteAudio');
+          remoteEl.srcObject = rStream;
+          remoteEl.play().catch(e => console.log("Audio play error:", e));
           markConnectedState();
         });
-      });
+      }
     }
 
     async function submitGuestJoin() {
@@ -456,6 +502,8 @@
     }
 
     function setupDataConnection() {
+      if (!peerConn) return;
+
       peerConn.on('open', () => {
         peerConn.send({ type: 'JOINED', name: userData.name });
       });
@@ -473,8 +521,11 @@
         }
       });
 
+      // Avoid immediate disconnect crash on data channel drop
       peerConn.on('close', () => {
-        handleUnexpectedDisconnect();
+        if (!userDisconnectedManual && isRecording) {
+          handleUnexpectedDisconnect();
+        }
       });
     }
 
@@ -487,7 +538,7 @@
       document.getElementById('rec-status-badge').className = "text-xs bg-emerald-900/60 text-emerald-300 border border-emerald-700 px-2.5 py-1 rounded-full";
 
       const banner = document.getElementById('waiting-banner');
-      banner.textContent = "🟢 Partner Connected! Clear Noise-Free Audio Active.";
+      banner.textContent = "🟢 Partner Connected! Ready for Dual Recording.";
       banner.className = "text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
 
       if (isHost) {
@@ -498,7 +549,7 @@
     }
 
     function startDualRecording() {
-      if (peerConn) peerConn.send({ type: 'START_REC' });
+      if (peerConn && peerConn.open) peerConn.send({ type: 'START_REC' });
       executeStartRecording();
     }
 
@@ -542,7 +593,7 @@
     }
 
     function stopDualRecording() {
-      if (peerConn) peerConn.send({ type: 'STOP_REC' });
+      if (peerConn && peerConn.open) peerConn.send({ type: 'STOP_REC' });
       executeStopRecording();
     }
 
@@ -568,7 +619,7 @@
       document.getElementById('receiver-rec-indicator').className = "text-[10px] text-slate-400 font-mono";
 
       const banner = document.getElementById('waiting-banner');
-      banner.textContent = "⏹️ Clean Recording Completed & Saved";
+      banner.textContent = "⏹️ Dual Recording Completed & Saved";
       banner.className = "text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
 
       if (isHost) {
@@ -613,8 +664,10 @@
     }
 
     function disconnectCall(sendSignal = true) {
-      if (sendSignal && peerConn) {
-        peerConn.send({ type: 'DISCONNECT' });
+      userDisconnectedManual = true;
+
+      if (sendSignal && peerConn && peerConn.open) {
+        try { peerConn.send({ type: 'DISCONNECT' }); } catch(e){}
       }
 
       if (isRecording) {
@@ -625,9 +678,9 @@
         localStream.getTracks().forEach(track => track.stop());
       }
 
-      if (peerConn) peerConn.close();
-      if (currentCall) currentCall.close();
-      if (peer) peer.destroy();
+      if (peerConn) try { peerConn.close(); } catch(e){}
+      if (currentCall) try { currentCall.close(); } catch(e){}
+      if (peer) try { peer.destroy(); } catch(e){}
 
       document.getElementById('rec-status-badge').textContent = "Disconnected";
       document.getElementById('rec-status-badge').className = "text-xs bg-rose-950 text-rose-400 border border-rose-800 px-2.5 py-1 rounded-full";
@@ -645,11 +698,11 @@
       if (isRecording) {
         executeStopRecording();
       }
-      document.getElementById('rec-status-badge').textContent = "Network Interrupted";
+      document.getElementById('rec-status-badge').textContent = "Signal Lost";
       document.getElementById('rec-status-badge').className = "text-xs bg-amber-950 text-amber-400 border border-amber-800 px-2.5 py-1 rounded-full";
 
       const banner = document.getElementById('waiting-banner');
-      banner.textContent = "⚠️ Call Interrupted! Audio saved to History.";
+      banner.textContent = "⚠️ Signal Lost! Saving recorded audio...";
       banner.className = "text-xs text-amber-400 bg-amber-950/40 border border-amber-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
     }
 
