@@ -290,6 +290,7 @@
     let isRecording = false;
     let historySaved = false;
     let userDisconnectedManual = false;
+    let connectRetryCount = 0;
     
     let timerInterval;
     let seconds = 0;
@@ -298,14 +299,20 @@
     let receiverCallsCount = 0;
     let callHistory = [];
 
-    // PeerJS Options with Google STUN Servers (Fixes NAT/Firewall blocking)
+    // 🔥 OPTIMIZED TURN/STUN CONFIGURATION FOR INTER-NETWORK MOBILE DATA (JIO - AIRTEL)
     const peerOptions = {
+      debug: 1,
       config: {
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
           { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'stun:stun2.l.google.com:19302' }
-        ]
+          { urls: 'stun:stun2.l.google.com:19302' },
+          { urls: 'stun:stun3.l.google.com:19302' },
+          { urls: 'stun:stun4.l.google.com:19302' },
+          { urls: 'stun:global.stun.twilio.com:3478' }
+        ],
+        iceCandidatePoolSize: 10,
+        sdpSemantics: 'unified-plan'
       }
     };
 
@@ -390,6 +397,7 @@
       isHost = true;
       historySaved = false;
       userDisconnectedManual = false;
+      connectRetryCount = 0;
       switchPage(5);
 
       document.getElementById('room-caller-name').textContent = `${userData.name} (You)`;
@@ -410,6 +418,7 @@
     async function startDirectGuestJoin(pairId, callerName, langName) {
       historySaved = false;
       userDisconnectedManual = false;
+      connectRetryCount = 0;
       switchPage(5);
 
       document.getElementById('room-caller-name').textContent = callerName || 'Caller';
@@ -427,7 +436,7 @@
       initializePeer(null, pairId);
     }
 
-    // 🔧 ROBUST PEERJS & ICE CONNECTION MANAGEMENT
+    // 🔧 ROBUST HANDSHAKE FOR CROSS-NETWORK MOBILE DATA
     function initializePeer(customId = null, targetPairId = null) {
       if (peer) { try { peer.destroy(); } catch(e){} }
 
@@ -435,7 +444,7 @@
 
       peer.on('open', (id) => {
         if (!isHost && targetPairId) {
-          setTimeout(() => connectToHost(targetPairId), 500);
+          retryConnectToHost(targetPairId);
         }
       });
 
@@ -447,6 +456,7 @@
       peer.on('call', (call) => {
         currentCall = call;
         call.answer(localStream);
+        
         call.on('stream', (rStream) => {
           remoteStream = rStream;
           const remoteEl = document.getElementById('remoteAudio');
@@ -463,14 +473,15 @@
       });
 
       peer.on('error', (err) => {
-        console.warn("Peer Error: ", err.type);
-        if (err.type === 'peer-unavailable' && !isHost) {
-          setTimeout(() => connectToHost(targetPairId), 2000);
+        console.warn("PeerJS Error Type:", err.type);
+        if ((err.type === 'peer-unavailable' || err.type === 'network' || err.type === 'webrtc') && !isHost && connectRetryCount < 5) {
+          connectRetryCount++;
+          setTimeout(() => retryConnectToHost(targetPairId), 1500);
         }
       });
     }
 
-    function connectToHost(targetPairId) {
+    function retryConnectToHost(targetPairId) {
       if (!peer || peer.destroyed) return;
 
       peerConn = peer.connect(targetPairId, { reliable: true });
@@ -521,7 +532,6 @@
         }
       });
 
-      // Avoid immediate disconnect crash on data channel drop
       peerConn.on('close', () => {
         if (!userDisconnectedManual && isRecording) {
           handleUnexpectedDisconnect();
