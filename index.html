@@ -24,7 +24,7 @@
   <div class="w-full max-w-xl bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 relative overflow-hidden">
     
     <!-- PAGE 1: USER REGISTRATION -->
-    <div id="page-1" class="space-y-5">
+    <div id="page-1" class="space-y-4">
       <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
         <div>
           <h2 class="text-2xl font-bold text-indigo-400">👤 User Registration</h2>
@@ -33,52 +33,70 @@
         <span class="text-xl font-black text-amber-400 border border-amber-500/40 px-3 py-1 rounded-xl bg-slate-900">HIRLA</span>
       </div>
 
-      <div class="space-y-4">
+      <div class="space-y-3">
         <div>
-          <label class="block text-sm font-medium text-slate-300 mb-1">Name / नाम</label>
-          <input type="text" id="reg-name" placeholder="Enter your full name" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+          <label class="block text-xs font-medium text-slate-300 mb-1">Name / नाम</label>
+          <input type="text" id="reg-name" placeholder="Enter full name" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-slate-300 mb-1">Gender / लिंग</label>
-          <select id="reg-gender" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
-            <option value="">-- Select Gender --</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
-          </select>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Gender / लिंग</label>
+            <select id="reg-gender" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+              <option value="">-- Select --</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Language / भाषा</label>
+            <select id="reg-lang" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+              <option value="">-- Select --</option>
+              <option value="Santali">Santali</option>
+              <option value="Assamese">Assamese</option>
+              <option value="Bhojpuri">Bhojpuri</option>
+              <option value="Haryanvi">Haryanvi</option>
+              <option value="Chhattisgarhi">Chhattisgarhi</option>
+              <option value="Nepali">Nepali</option>
+              <option value="Marwadi">Marwadi</option>
+              <option value="Maithili">Maithili</option>
+              <option value="Bengali">Bengali</option>
+              <option value="Hindi">Hindi</option>
+            </select>
+          </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-slate-300 mb-1">Language / भाषा</label>
-          <select id="reg-lang" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
-            <option value="">-- Select Language --</option>
-            <option value="Santali">Santali</option>
-            <option value="Assamese">Assamese</option>
-            <option value="Bhojpuri">Bhojpuri</option>
-            <option value="Haryanvi">Haryanvi</option>
-            <option value="Chhattisgarhi">Chhattisgarhi</option>
-            <option value="Nepali">Nepali</option>
-            <option value="Marwadi">Marwadi</option>
-            <option value="Maithili">Maithili</option>
-            <option value="Bengali">Bengali</option>
-            <option value="Hindi">Hindi</option>
-          </select>
+        <div class="border-t border-slate-700/60 pt-3 space-y-2">
+          <p class="text-xs font-semibold text-amber-400">💳 Payment Options (At least one required)</p>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">UPI ID</label>
+            <input type="text" id="reg-upi" placeholder="e.g. username@upi" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="block text-[10px] font-medium text-slate-300 mb-1">Account No</label>
+              <input type="text" id="reg-bank-acc" placeholder="Acc Number" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs text-slate-100">
+            </div>
+            <div>
+              <label class="block text-[10px] font-medium text-slate-300 mb-1">IFSC Code</label>
+              <input type="text" id="reg-bank-ifsc" placeholder="IFSC Code" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs text-slate-100">
+            </div>
+            <div>
+              <label class="block text-[10px] font-medium text-slate-300 mb-1">Bank Name</label>
+              <input type="text" id="reg-bank-name" placeholder="Bank Name" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs text-slate-100">
+            </div>
+          </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-slate-300 mb-1">UPI ID (For Payments)</label>
-          <input type="text" id="reg-upi" placeholder="e.g. username@upi" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
-        </div>
-
-        <button onclick="saveRegistrationAndProceed()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition mt-4 shadow-lg">
+        <button onclick="saveRegistrationAndProceed()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-lg transition mt-3 shadow-lg">
           Start Setup ➔
         </button>
       </div>
     </div>
 
     <!-- PAGE 1B: GUEST JOIN -->
-    <div id="page-guest-join" class="hidden space-y-5">
+    <div id="page-guest-join" class="hidden space-y-4">
       <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
         <div>
           <h2 class="text-2xl font-bold text-emerald-400">🎙️ Join Recording Session</h2>
@@ -89,45 +107,52 @@
         <span class="text-xl font-black text-amber-400 border border-amber-500/40 px-3 py-1 rounded-xl bg-slate-900">HIRLA</span>
       </div>
 
-      <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-slate-300 mb-1">Your Name</label>
-          <input type="text" id="guest-name" placeholder="Enter your full name" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Your Name</label>
+            <input type="text" id="guest-name" placeholder="Full name" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Gender</label>
+            <select id="guest-gender" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-slate-300 mb-1">Your Gender</label>
-          <select id="guest-gender" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
-          </select>
+        <div class="border-t border-slate-700/60 pt-2 space-y-2">
+          <p class="text-xs font-semibold text-amber-400">💳 Payment Details</p>
+          <input type="text" id="guest-upi" placeholder="UPI ID (e.g. user@upi)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs">
+          <div class="grid grid-cols-3 gap-2">
+            <input type="text" id="guest-bank-acc" placeholder="Acc Number" class="bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs">
+            <input type="text" id="guest-bank-ifsc" placeholder="IFSC Code" class="bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs">
+            <input type="text" id="guest-bank-name" placeholder="Bank Name" class="bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs">
+          </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-slate-300 mb-1">UPI ID (Payment)</label>
-          <input type="text" id="guest-upi" placeholder="e.g. username@upi" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
-        </div>
-
-        <button onclick="submitGuestJoin()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg transition shadow-lg mt-2">
+        <button onclick="submitGuestJoin()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-lg transition shadow-lg mt-2">
           Join Recording Room ➔
         </button>
       </div>
     </div>
 
     <!-- PAGE 2: MAIN DASHBOARD -->
-    <div id="page-2" class="hidden space-y-5">
-      <div class="flex justify-between items-start border-b border-slate-700 pb-3">
+    <div id="page-2" class="hidden space-y-4">
+      <div class="flex justify-between items-start border-b border-slate-700 pb-2">
         <div>
-          <h2 id="dash-user-name" class="text-xl font-bold text-slate-100">User Dashboard</h2>
+          <h2 id="dash-user-name" class="text-lg font-bold text-slate-100">User Dashboard</h2>
           <p id="dash-user-info" class="text-xs text-indigo-400 mt-0.5"></p>
+          <p id="dash-bank-info" class="text-[11px] text-amber-300/80 mt-0.5"></p>
         </div>
-        <button onclick="resetProfile()" class="text-xs bg-rose-900/40 hover:bg-rose-800/60 text-rose-300 border border-rose-700/60 px-2.5 py-1 rounded-md transition flex items-center gap-1">
+        <button onclick="resetProfile()" class="text-xs bg-rose-900/40 hover:bg-rose-800/60 text-rose-300 border border-rose-700/60 px-2 py-1 rounded-md transition flex items-center gap-1">
           <span>🔄</span> Reset
         </button>
       </div>
 
-      <!-- PAYMENT STATUS CARDS (USER SPECIFIC) -->
+      <!-- PAYMENT STATUS CARDS -->
       <div class="grid grid-cols-3 gap-2 text-center bg-slate-900 p-3 rounded-xl border border-slate-700">
         <div>
           <p class="text-[10px] text-slate-400 uppercase font-semibold">Total Earned</p>
@@ -143,24 +168,29 @@
         </div>
       </div>
 
-      <button onclick="switchPage(3)" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2 shadow-lg">
-        <span>🤝</span> Invite Partner
-      </button>
-
-      <div class="grid grid-cols-2 gap-3">
-        <div class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-center">
-          <p class="text-xs text-slate-400">Total Caller Calls</p>
-          <p id="count-caller" class="text-xl font-bold text-indigo-400 mt-0.5">0</p>
+      <!-- CALL STATISTICS & ELIGIBLE WORK TIME -->
+      <div class="grid grid-cols-3 gap-2">
+        <div class="bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-center">
+          <p class="text-[10px] text-slate-400 uppercase">Caller Calls</p>
+          <p id="count-caller" class="text-lg font-bold text-indigo-400 mt-0.5">0</p>
         </div>
-        <div class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-center">
-          <p class="text-xs text-slate-400">Total Receiver Calls</p>
-          <p id="count-receiver" class="text-xl font-bold text-cyan-400 mt-0.5">0</p>
+        <div class="bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-center">
+          <p class="text-[10px] text-slate-400 uppercase">Receiver Calls</p>
+          <p id="count-receiver" class="text-lg font-bold text-cyan-400 mt-0.5">0</p>
+        </div>
+        <div class="bg-slate-900 border border-amber-500/40 p-2.5 rounded-xl text-center">
+          <p class="text-[10px] text-amber-400 uppercase font-semibold">Eligible Time</p>
+          <p id="dash-eligible-time" class="text-sm font-bold text-amber-300 mt-0.5">0m (≥10m)</p>
         </div>
       </div>
 
-      <div class="space-y-3">
-        <h3 class="text-sm font-semibold text-slate-300">Previous Recording Data / History</h3>
-        <div id="history-list" class="space-y-2 max-h-52 overflow-y-auto pr-1">
+      <button onclick="switchPage(3)" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-lg transition flex items-center justify-center gap-2 shadow-lg text-sm">
+        <span>🤝</span> Invite Partner
+      </button>
+
+      <div class="space-y-2">
+        <h3 class="text-xs font-semibold text-slate-300">Previous Recording Data / History</h3>
+        <div id="history-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
           <p class="text-xs text-slate-500 text-center py-4 bg-slate-900/50 rounded-lg">कोई रिकॉर्डिंग हिस्ट्री मौजूद नहीं है।</p>
         </div>
       </div>
@@ -300,8 +330,8 @@
   </div>
 
   <script>
-    // 💡 Update Here: New Web App Script Exec URL Assigned Below
-    const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbztDPCPSq__fmTgOkkg11lgdNij5RVwDGN5xW9Xn5N_wU_P5j2T8Ssrun1hCSayTveP1Q/exec";
+    // Updated Google Sheet Script URL
+    const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbzzwj7N4m3sJZ2wX0OoHJ4a8os_SvBwzb8S10qeIQJFPAW2bpJ8AkF-BN2fXdEH39SEVQ/exec";
 
     let userData = {};
     let currentPairId = '';
@@ -388,9 +418,14 @@
       const gender = document.getElementById('reg-gender').value;
       const lang = document.getElementById('reg-lang').value;
       const upi = document.getElementById('reg-upi').value.trim();
+      const acc = document.getElementById('reg-bank-acc').value.trim();
+      const ifsc = document.getElementById('reg-bank-ifsc').value.trim();
+      const bname = document.getElementById('reg-bank-name').value.trim();
 
-      if (!name || !gender || !lang) { alert('कृपया सभी जानकारी भरें।'); return; }
-      userData = { name, gender, lang, upi };
+      if (!name || !gender || !lang) { alert('कृपया सभी अनिवार्य जानकारी भरें।'); return; }
+      if (!upi && !acc) { alert('कृपया पेमेंट के लिए UPI ID या Bank Details में से कोई एक ज़रूर भरें।'); return; }
+
+      userData = { name, gender, lang, upi, acc, ifsc, bname };
       localStorage.setItem('rec_user_profile', JSON.stringify(userData));
       renderDashboard();
       switchPage(2);
@@ -398,12 +433,23 @@
 
     function renderDashboard() {
       document.getElementById('dash-user-name').textContent = `Welcome, ${userData.name}`;
-      document.getElementById('dash-user-info').textContent = `Gender: ${userData.gender} | Language: ${userData.lang} | UPI: ${userData.upi || 'N/A'}`;
+      document.getElementById('dash-user-info').textContent = `Gender: ${userData.gender} | Language: ${userData.lang}`;
       
+      let paymentStr = `UPI: ${userData.upi || 'N/A'}`;
+      if (userData.acc) paymentStr += ` | Bank: ${userData.bname || ''} (${userData.acc})`;
+      document.getElementById('dash-bank-info').textContent = paymentStr;
+
       let totalEarned = 0;
+      let totalEligibleSeconds = 0;
+
       callHistory.forEach(item => {
         totalEarned += Number(item.numericEarned || 0);
+        if (item.durationSecs >= 600) {
+          totalEligibleSeconds += item.durationSecs;
+        }
       });
+
+      let eligibleMins = Math.floor(totalEligibleSeconds / 60);
 
       let pending = totalEarned - totalPaidByUser;
       if (pending < 0) pending = 0;
@@ -411,6 +457,7 @@
       document.getElementById('dash-total-earned').textContent = `₹ ${totalEarned.toFixed(2)}`;
       document.getElementById('dash-paid-amount').textContent = `₹ ${totalPaidByUser.toFixed(2)}`;
       document.getElementById('dash-pending-amount').textContent = `₹ ${pending.toFixed(2)}`;
+      document.getElementById('dash-eligible-time').textContent = `${eligibleMins} Mins`;
 
       updateHistoryUI();
     }
@@ -493,9 +540,14 @@
       const name = document.getElementById('guest-name').value.trim();
       const gender = document.getElementById('guest-gender').value;
       const upi = document.getElementById('guest-upi').value.trim();
+      const acc = document.getElementById('guest-bank-acc').value.trim();
+      const ifsc = document.getElementById('guest-bank-ifsc').value.trim();
+      const bname = document.getElementById('guest-bank-name').value.trim();
+
       if (!name) return alert('अपना नाम दर्ज करें');
       
       userData.name = name; userData.gender = gender; userData.upi = upi;
+      userData.acc = acc; userData.ifsc = ifsc; userData.bname = bname;
       localStorage.setItem('rec_user_profile', JSON.stringify(userData));
 
       const urlParams = new URLSearchParams(window.location.search);
@@ -592,6 +644,9 @@
     function sendDataToGoogleSheet() {
       if (!GOOGLE_SHEET_URL) return;
 
+      let paymentDetailsStr = `UPI: ${userData.upi || 'N/A'}`;
+      if (userData.acc) paymentDetailsStr += ` | Bank: ${userData.bname || ''} A/C:${userData.acc} IFSC:${userData.ifsc || ''}`;
+
       const payload = {
         pairId: currentPairId || 'PAIR-DIRECT',
         userName: userData.name || 'Unknown',
@@ -600,7 +655,7 @@
         lang: userData.lang || 'SANTALI',
         durationSecs: seconds,
         durationText: document.getElementById('timer').textContent,
-        upi: userData.upi || 'N/A'
+        upi: paymentDetailsStr
       };
 
       fetch(GOOGLE_SHEET_URL, {
@@ -638,8 +693,10 @@
       const record = {
         id: currentPairId || 'PAIR-DISCONNECTED',
         user: userData.name || 'User',
+        role: isHost ? 'Caller' : 'Receiver',
         lang: userData.lang || 'SANTALI',
         duration: document.getElementById('timer').textContent,
+        durationSecs: seconds,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         earnings: estEarnings,
         numericEarned: numericAmt,
@@ -718,13 +775,14 @@
         return;
       }
       historyList.innerHTML = callHistory.map((rec, i) => `
-        <div class="bg-slate-900/90 border border-slate-700/80 p-3 rounded-xl flex items-center justify-between text-xs">
+        <div class="bg-slate-900/90 border border-slate-700/80 p-2.5 rounded-xl flex items-center justify-between text-xs">
           <div>
             <span class="font-mono font-bold text-indigo-400">${rec.id}</span>
-            <p class="text-slate-400 text-[11px]">⏱️ Duration: ${rec.duration} | 🕒 ${rec.time}</p>
+            <span class="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded ml-1 border border-slate-700">${rec.role || 'Call'}</span>
+            <p class="text-slate-400 text-[11px] mt-0.5">⏱️ Duration: ${rec.duration} | 🕒 ${rec.time}</p>
             <p class="text-emerald-400 font-medium text-[11px] mt-0.5">💰 Earned: ${rec.earnings || '₹ 0'}</p>
           </div>
-          <button onclick="downloadHistoryZip(${i})" class="bg-indigo-600 text-white px-3 py-1.5 rounded-md text-xs">📦 ZIP</button>
+          <button onclick="downloadHistoryZip(${i})" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1 rounded-md text-xs transition">📦 ZIP</button>
         </div>
       `).join('');
     }
