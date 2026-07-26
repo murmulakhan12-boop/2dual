@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dual-Channel Call & ZIP Recording System - HIRLA</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- JSZip and FileSaver for local ZIP creation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <!-- PeerJS for WebRTC Audio Streaming -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
     .pulse-red { animation: pulse 1.2s infinite; }
@@ -19,84 +21,62 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
 
+  <!-- Remote Audio Playback Element -->
   <audio id="remoteAudio" autoplay playsinline class="hidden"></audio>
 
   <div class="w-full max-w-xl bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 relative overflow-hidden">
     
     <!-- PAGE 1: USER REGISTRATION -->
-    <div id="page-1" class="space-y-4">
+    <div id="page-1" class="space-y-5">
       <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
         <div>
           <h2 class="text-2xl font-bold text-indigo-400">👤 User Registration</h2>
           <p class="text-xs text-slate-400 mt-1">अपनी जानकारी दर्ज करके शुरू करें</p>
         </div>
-        <span class="text-xl font-black text-amber-400 border border-amber-500/40 px-3 py-1 rounded-xl bg-slate-900">HIRLA</span>
+        <span class="text-sm font-extrabold text-amber-400 tracking-wider bg-slate-900 px-3 py-1 rounded-lg border border-slate-700">HIRLA</span>
       </div>
 
-      <div class="space-y-3">
+      <div class="space-y-4">
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Name / नाम</label>
-          <input type="text" id="reg-name" placeholder="Enter full name" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+          <label class="block text-sm font-medium text-slate-300 mb-1">Name / नाम</label>
+          <input type="text" id="reg-name" placeholder="Enter your full name" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">Gender / लिंग</label>
-            <select id="reg-gender" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
-              <option value="">-- Select --</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">Language / भाषा</label>
-            <select id="reg-lang" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
-              <option value="">-- Select --</option>
-              <option value="Santali">Santali</option>
-              <option value="Assamese">Assamese</option>
-              <option value="Bhojpuri">Bhojpuri</option>
-              <option value="Haryanvi">Haryanvi</option>
-              <option value="Chhattisgarhi">Chhattisgarhi</option>
-              <option value="Nepali">Nepali</option>
-              <option value="Marwadi">Marwadi</option>
-              <option value="Maithili">Maithili</option>
-              <option value="Bengali">Bengali</option>
-              <option value="Hindi">Hindi</option>
-            </select>
-          </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Gender / लिंग</label>
+          <select id="reg-gender" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+            <option value="">-- Select Gender --</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
         </div>
 
-        <div class="border-t border-slate-700/60 pt-3 space-y-2">
-          <p class="text-xs font-semibold text-amber-400">💳 Payment Options (At least one required)</p>
-          <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">UPI ID</label>
-            <input type="text" id="reg-upi" placeholder="e.g. username@upi" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
-          </div>
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label class="block text-[10px] font-medium text-slate-300 mb-1">Account No</label>
-              <input type="text" id="reg-bank-acc" placeholder="Acc Number" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs text-slate-100">
-            </div>
-            <div>
-              <label class="block text-[10px] font-medium text-slate-300 mb-1">IFSC Code</label>
-              <input type="text" id="reg-bank-ifsc" placeholder="IFSC Code" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs text-slate-100">
-            </div>
-            <div>
-              <label class="block text-[10px] font-medium text-slate-300 mb-1">Bank Name</label>
-              <input type="text" id="reg-bank-name" placeholder="Bank Name" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs text-slate-100">
-            </div>
-          </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Language / भाषा</label>
+          <select id="reg-lang" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+            <option value="">-- Select Language --</option>
+            <option value="Santali">Santali</option>
+            <option value="Assamese">Assamese</option>
+            <option value="Bhojpuri">Bhojpuri</option>
+            <option value="Haryanvi">Haryanvi</option>
+            <option value="Chhattisgarhi">Chhattisgarhi</option>
+            <option value="Nepali">Nepali</option>
+            <option value="Marwadi">Marwadi</option>
+            <option value="Maithili">Maithili</option>
+            <option value="Bengali">Bengali</option>
+            <option value="Hindi">Hindi</option>
+          </select>
         </div>
 
-        <button onclick="saveRegistrationAndProceed()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-lg transition mt-3 shadow-lg">
+        <button onclick="saveRegistrationAndProceed()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition mt-4 shadow-lg">
           Start Setup ➔
         </button>
       </div>
     </div>
 
-    <!-- PAGE 1B: GUEST JOIN -->
-    <div id="page-guest-join" class="hidden space-y-4">
+    <!-- PAGE 1B: GUEST / RECEIVER JOIN PAGE -->
+    <div id="page-guest-join" class="hidden space-y-5">
       <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
         <div>
           <h2 class="text-2xl font-bold text-emerald-400">🎙️ Join Recording Session</h2>
@@ -104,93 +84,111 @@
             Invited by <span id="guest-caller-name" class="font-semibold text-indigo-300">Caller</span> · Language: <span id="guest-caller-lang" class="font-semibold font-mono text-amber-300">SANTALI</span>
           </p>
         </div>
-        <span class="text-xl font-black text-amber-400 border border-amber-500/40 px-3 py-1 rounded-xl bg-slate-900">HIRLA</span>
+        <span class="text-xs font-bold text-amber-400 bg-slate-900 px-2.5 py-1 rounded border border-slate-700">HIRLA</span>
       </div>
 
-      <div class="space-y-3">
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">Your Name</label>
-            <input type="text" id="guest-name" placeholder="Full name" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">Gender</label>
-            <select id="guest-gender" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-slate-100">
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Your Name</label>
+          <input type="text" id="guest-name" placeholder="Enter your full name" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
         </div>
 
-        <div class="border-t border-slate-700/60 pt-2 space-y-2">
-          <p class="text-xs font-semibold text-amber-400">💳 Payment Details</p>
-          <input type="text" id="guest-upi" placeholder="UPI ID (e.g. user@upi)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs">
-          <div class="grid grid-cols-3 gap-2">
-            <input type="text" id="guest-bank-acc" placeholder="Acc Number" class="bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs">
-            <input type="text" id="guest-bank-ifsc" placeholder="IFSC Code" class="bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs">
-            <input type="text" id="guest-bank-name" placeholder="Bank Name" class="bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs">
-          </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Your Gender</label>
+          <select id="guest-gender" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
         </div>
 
-        <button onclick="submitGuestJoin()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-lg transition shadow-lg mt-2">
+        <button onclick="submitGuestJoin()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg transition shadow-lg mt-2">
           Join Recording Room ➔
         </button>
       </div>
     </div>
 
     <!-- PAGE 2: MAIN DASHBOARD -->
-    <div id="page-2" class="hidden space-y-4">
-      <div class="flex justify-between items-start border-b border-slate-700 pb-2">
+    <div id="page-2" class="hidden space-y-6">
+      <div class="flex justify-between items-start border-b border-slate-700 pb-3">
         <div>
-          <h2 id="dash-user-name" class="text-lg font-bold text-slate-100">User Dashboard</h2>
+          <div class="flex items-center gap-2">
+            <h2 id="dash-user-name" class="text-xl font-bold text-slate-100">User Dashboard</h2>
+            <span class="text-xs font-extrabold text-amber-400 bg-slate-900 px-2 py-0.5 rounded border border-amber-500/40">HIRLA</span>
+          </div>
           <p id="dash-user-info" class="text-xs text-indigo-400 mt-0.5"></p>
-          <p id="dash-bank-info" class="text-[11px] text-amber-300/80 mt-0.5"></p>
         </div>
-        <button onclick="resetProfile()" class="text-xs bg-rose-900/40 hover:bg-rose-800/60 text-rose-300 border border-rose-700/60 px-2 py-1 rounded-md transition flex items-center gap-1">
+        <button onclick="resetProfile()" class="text-xs bg-rose-900/40 hover:bg-rose-800/60 text-rose-300 border border-rose-700/60 px-2.5 py-1 rounded-md transition flex items-center gap-1">
           <span>🔄</span> Reset
         </button>
       </div>
 
-      <!-- PAYMENT STATUS CARDS -->
-      <div class="grid grid-cols-3 gap-2 text-center bg-slate-900 p-3 rounded-xl border border-slate-700">
-        <div>
-          <p class="text-[10px] text-slate-400 uppercase font-semibold">Total Earned</p>
-          <p id="dash-total-earned" class="text-base font-bold text-emerald-400 mt-0.5">₹ 0.00</p>
-        </div>
-        <div class="border-x border-slate-800">
-          <p class="text-[10px] text-slate-400 uppercase font-semibold">Paid Amount</p>
-          <p id="dash-paid-amount" class="text-base font-bold text-cyan-400 mt-0.5">₹ 0.00</p>
-        </div>
-        <div>
-          <p class="text-[10px] text-slate-400 uppercase font-semibold">Pending Pay</p>
-          <p id="dash-pending-amount" class="text-base font-bold text-amber-400 mt-0.5">₹ 0.00</p>
-        </div>
-      </div>
-
-      <!-- CALL STATISTICS & ELIGIBLE WORK TIME -->
-      <div class="grid grid-cols-3 gap-2">
-        <div class="bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-center">
-          <p class="text-[10px] text-slate-400 uppercase">Caller Calls</p>
-          <p id="count-caller" class="text-lg font-bold text-indigo-400 mt-0.5">0</p>
-        </div>
-        <div class="bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-center">
-          <p class="text-[10px] text-slate-400 uppercase">Receiver Calls</p>
-          <p id="count-receiver" class="text-lg font-bold text-cyan-400 mt-0.5">0</p>
-        </div>
-        <div class="bg-slate-900 border border-amber-500/40 p-2.5 rounded-xl text-center">
-          <p class="text-[10px] text-amber-400 uppercase font-semibold">Eligible Time</p>
-          <p id="dash-eligible-time" class="text-sm font-bold text-amber-300 mt-0.5">0m (≥10m)</p>
-        </div>
-      </div>
-
-      <button onclick="switchPage(3)" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-lg transition flex items-center justify-center gap-2 shadow-lg text-sm">
+      <button onclick="switchPage(3)" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2 shadow-lg">
         <span>🤝</span> Invite Partner
       </button>
 
-      <div class="space-y-2">
-        <h3 class="text-xs font-semibold text-slate-300">Previous Recording Data / History</h3>
-        <div id="history-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+      <!-- CALL METRICS DISPLAY -->
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-center">
+            <p class="text-xs text-slate-400">Total Caller Calls</p>
+            <p id="count-caller" class="text-2xl font-bold text-indigo-400 mt-1">0</p>
+            <p class="text-[11px] text-slate-400 mt-1">Duration: <span id="dur-caller" class="font-mono text-indigo-300 font-semibold">00m 00s</span></p>
+          </div>
+          <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-center">
+            <p class="text-xs text-slate-400">Total Receiver Calls</p>
+            <p id="count-receiver" class="text-2xl font-bold text-cyan-400 mt-1">0</p>
+            <p class="text-[11px] text-slate-400 mt-1">Duration: <span id="dur-receiver" class="font-mono text-cyan-300 font-semibold">00m 00s</span></p>
+          </div>
+        </div>
+
+        <!-- TOTAL COMBINED CALLS & MINUTES -->
+        <div class="bg-slate-900/90 border border-emerald-500/40 p-3.5 rounded-xl flex items-center justify-between text-center">
+          <div>
+            <p class="text-[11px] text-slate-400 uppercase tracking-wider">Total Calls Made</p>
+            <p id="count-total-combined" class="text-xl font-bold text-emerald-400 mt-0.5">0</p>
+          </div>
+          <div class="h-8 w-px bg-slate-700"></div>
+          <div>
+            <p class="text-[11px] text-slate-400 uppercase tracking-wider">Total Combined Duration</p>
+            <p id="dur-total-combined" class="text-xl font-mono font-bold text-amber-400 mt-0.5">00m 00s</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASSBOOK & UPI DETAILS SECTION -->
+      <div class="bg-slate-900/80 border border-slate-700 p-4 rounded-xl space-y-3">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
+            <span>💳</span> Bank Passbook & UPI Details
+          </h3>
+          <button onclick="toggleBankEdit()" id="btn-edit-bank" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-slate-600">Edit</button>
+        </div>
+
+        <div id="bank-view" class="text-xs space-y-1 text-slate-300">
+          <p><span class="text-slate-500">Account Holder:</span> <span id="view-acc-holder" class="font-medium">Not added</span></p>
+          <p><span class="text-slate-500">Bank Name:</span> <span id="view-bank-name" class="font-medium">Not added</span></p>
+          <p><span class="text-slate-500">Branch:</span> <span id="view-bank-branch" class="font-medium">Not added</span></p>
+          <p><span class="text-slate-500">Account No:</span> <span id="view-acc-no" class="font-mono font-medium">Not added</span></p>
+          <p><span class="text-slate-500">IFSC Code:</span> <span id="view-ifsc" class="font-mono font-medium">Not added</span></p>
+          <p><span class="text-slate-500">UPI ID:</span> <span id="view-upi" class="font-mono font-semibold text-emerald-400">Not added</span></p>
+        </div>
+
+        <div id="bank-form" class="hidden space-y-2 text-xs">
+          <input type="text" id="input-acc-holder" placeholder="Account Holder Name" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <input type="text" id="input-bank-name" placeholder="Bank Name (e.g., SBI)" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <input type="text" id="input-bank-branch" placeholder="Branch Name (e.g., Main Branch Ranchi)" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <input type="text" id="input-acc-no" placeholder="Account Number" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <input type="text" id="input-ifsc" placeholder="IFSC Code" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <input type="text" id="input-upi" placeholder="UPI ID (e.g., user@upi)" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <button onclick="saveBankDetails()" class="w-full bg-amber-600 hover:bg-amber-500 text-slate-900 font-bold py-2 rounded transition">Save Bank Details</button>
+        </div>
+      </div>
+
+      <!-- PREVIOUS RECORDINGS HISTORY -->
+      <div class="space-y-3">
+        <h3 class="text-sm font-semibold text-slate-300">Previous Recording Data / History</h3>
+        <div id="history-list" class="space-y-2 max-h-56 overflow-y-auto pr-1">
           <p class="text-xs text-slate-500 text-center py-4 bg-slate-900/50 rounded-lg">कोई रिकॉर्डिंग हिस्ट्री मौजूद नहीं है।</p>
         </div>
       </div>
@@ -253,6 +251,7 @@
         <span id="rec-status-badge" class="text-xs bg-amber-900/60 text-amber-300 border border-amber-700 px-2.5 py-1 rounded-full">Connecting...</span>
       </div>
 
+      <!-- PARTICIPANTS DISPLAY CARDS -->
       <div class="grid grid-cols-2 gap-3">
         <div id="box-caller" class="bg-slate-900/90 border border-indigo-500/50 p-3 rounded-xl space-y-1">
           <div class="flex items-center justify-between">
@@ -273,6 +272,7 @@
         </div>
       </div>
 
+      <!-- Timer Banner -->
       <div class="text-center bg-slate-900 border border-slate-700 py-4 rounded-xl space-y-2">
         <p id="timer" class="text-4xl font-mono font-bold text-slate-100">00:00:00</p>
         <p id="waiting-banner" class="text-xs text-amber-400 bg-amber-950/40 border border-amber-800/60 py-1.5 px-4 rounded-full font-medium inline-block">
@@ -286,6 +286,7 @@
         </p>
       </div>
 
+      <!-- Controls -->
       <div class="space-y-2">
         <div id="host-controls" class="flex gap-3">
           <button id="btn-start-rec" onclick="startDualRecording()" disabled class="flex-1 bg-emerald-600 opacity-50 cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg">
@@ -301,22 +302,23 @@
         </button>
       </div>
 
+      <!-- Downloads Output -->
       <div id="download-section" class="hidden bg-slate-900 border border-slate-700 p-4 rounded-xl space-y-3">
         <h3 class="text-sm font-semibold text-emerald-400 border-b border-slate-800 pb-1">✅ Audio Output Files Ready</h3>
 
         <div class="space-y-2">
           <div class="flex items-center justify-between bg-slate-800 p-2.5 rounded border border-slate-700">
-            <span class="text-xs text-indigo-300 font-medium">1. Local Voice Stream</span>
+            <span class="text-xs text-indigo-300 font-medium">1. Local Voice Stream (Clean)</span>
             <a id="dl-local" download="Local_Audio.wav" class="text-xs bg-indigo-600 hover:bg-indigo-500 px-3 py-1.5 rounded font-medium">Download</a>
           </div>
 
           <div class="flex items-center justify-between bg-slate-800 p-2.5 rounded border border-slate-700">
-            <span class="text-xs text-cyan-300 font-medium">2. Remote Voice Stream</span>
+            <span class="text-xs text-cyan-300 font-medium">2. Remote Voice Stream (Clean)</span>
             <a id="dl-remote" download="Remote_Audio.wav" class="text-xs bg-cyan-600 hover:bg-cyan-500 px-3 py-1.5 rounded font-medium">Download</a>
           </div>
 
           <div class="flex items-center justify-between bg-slate-800 p-2.5 rounded border border-slate-700">
-            <span class="text-xs text-amber-300 font-medium">3. ZIP Package</span>
+            <span class="text-xs text-amber-300 font-medium">3. ZIP Package (Dual Audio + Metadata)</span>
             <button onclick="downloadCurrentZip()" class="text-xs bg-amber-600 hover:bg-amber-500 px-3 py-1.5 rounded font-medium">📦 Download ZIP</button>
           </div>
         </div>
@@ -330,10 +332,8 @@
   </div>
 
   <script>
-    // Updated Google Sheet Script URL
-    const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbzzwj7N4m3sJZ2wX0OoHJ4a8os_SvBwzb8S10qeIQJFPAW2bpJ8AkF-BN2fXdEH39SEVQ/exec";
-
     let userData = {};
+    let bankData = {};
     let currentPairId = '';
     let isHost = true;
     let peer = null;
@@ -348,14 +348,19 @@
     let isRecording = false;
     let historySaved = false;
     let userDisconnectedManual = false;
+    let connectRetryCount = 0;
     
     let timerInterval;
     let seconds = 0;
 
     let callerCallsCount = 0;
     let receiverCallsCount = 0;
+    let callerTotalSeconds = 0;
+    let receiverTotalSeconds = 0;
+    let currentSessionPartner = 'Unknown Partner';
+    let currentSessionCaller = 'Unknown Caller';
+
     let callHistory = [];
-    let totalPaidByUser = 0;
 
     const peerOptions = {
       debug: 1,
@@ -364,6 +369,8 @@
           { urls: 'stun:stun.l.google.com:19302' },
           { urls: 'stun:stun1.l.google.com:19302' },
           { urls: 'stun:stun2.l.google.com:19302' },
+          { urls: 'stun:stun3.l.google.com:19302' },
+          { urls: 'stun:stun4.l.google.com:19302' },
           { urls: 'stun:global.stun.twilio.com:3478' }
         ],
         iceCandidatePoolSize: 10,
@@ -373,7 +380,12 @@
 
     async function getCleanAudioStream() {
       return await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 48000 }
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: 48000
+        }
       });
     }
 
@@ -388,6 +400,7 @@
       if (pairFromUrl) {
         isHost = false;
         currentPairId = pairFromUrl;
+        currentSessionCaller = callerFromUrl || 'Caller';
         
         if (userData && userData.name) {
           startDirectGuestJoin(pairFromUrl, callerFromUrl, langFromUrl);
@@ -417,15 +430,9 @@
       const name = document.getElementById('reg-name').value.trim();
       const gender = document.getElementById('reg-gender').value;
       const lang = document.getElementById('reg-lang').value;
-      const upi = document.getElementById('reg-upi').value.trim();
-      const acc = document.getElementById('reg-bank-acc').value.trim();
-      const ifsc = document.getElementById('reg-bank-ifsc').value.trim();
-      const bname = document.getElementById('reg-bank-name').value.trim();
 
-      if (!name || !gender || !lang) { alert('कृपया सभी अनिवार्य जानकारी भरें।'); return; }
-      if (!upi && !acc) { alert('कृपया पेमेंट के लिए UPI ID या Bank Details में से कोई एक ज़रूर भरें।'); return; }
-
-      userData = { name, gender, lang, upi, acc, ifsc, bname };
+      if (!name || !gender || !lang) { alert('कृपया सभी जानकारी भरें।'); return; }
+      userData = { name, gender, lang };
       localStorage.setItem('rec_user_profile', JSON.stringify(userData));
       renderDashboard();
       switchPage(2);
@@ -434,32 +441,61 @@
     function renderDashboard() {
       document.getElementById('dash-user-name').textContent = `Welcome, ${userData.name}`;
       document.getElementById('dash-user-info').textContent = `Gender: ${userData.gender} | Language: ${userData.lang}`;
-      
-      let paymentStr = `UPI: ${userData.upi || 'N/A'}`;
-      if (userData.acc) paymentStr += ` | Bank: ${userData.bname || ''} (${userData.acc})`;
-      document.getElementById('dash-bank-info').textContent = paymentStr;
-
-      let totalEarned = 0;
-      let totalEligibleSeconds = 0;
-
-      callHistory.forEach(item => {
-        totalEarned += Number(item.numericEarned || 0);
-        if (item.durationSecs >= 600) {
-          totalEligibleSeconds += item.durationSecs;
-        }
-      });
-
-      let eligibleMins = Math.floor(totalEligibleSeconds / 60);
-
-      let pending = totalEarned - totalPaidByUser;
-      if (pending < 0) pending = 0;
-
-      document.getElementById('dash-total-earned').textContent = `₹ ${totalEarned.toFixed(2)}`;
-      document.getElementById('dash-paid-amount').textContent = `₹ ${totalPaidByUser.toFixed(2)}`;
-      document.getElementById('dash-pending-amount').textContent = `₹ ${pending.toFixed(2)}`;
-      document.getElementById('dash-eligible-time').textContent = `${eligibleMins} Mins`;
-
+      renderBankUI();
       updateHistoryUI();
+    }
+
+    function toggleBankEdit() {
+      const form = document.getElementById('bank-form');
+      const view = document.getElementById('bank-view');
+      const btn = document.getElementById('btn-edit-bank');
+      if (form.classList.contains('hidden')) {
+        form.classList.remove('hidden');
+        view.classList.add('hidden');
+        btn.textContent = 'Cancel';
+      } else {
+        form.classList.add('hidden');
+        view.classList.remove('hidden');
+        btn.textContent = 'Edit';
+      }
+    }
+
+    function saveBankDetails() {
+      bankData = {
+        accHolder: document.getElementById('input-acc-holder').value.trim(),
+        bankName: document.getElementById('input-bank-name').value.trim(),
+        branch: document.getElementById('input-bank-branch').value.trim(),
+        accNo: document.getElementById('input-acc-no').value.trim(),
+        ifsc: document.getElementById('input-ifsc').value.trim(),
+        upi: document.getElementById('input-upi').value.trim()
+      };
+      localStorage.setItem('rec_bank_details', JSON.stringify(bankData));
+      renderBankUI();
+      toggleBankEdit();
+    }
+
+    function renderBankUI() {
+      if (bankData) {
+        document.getElementById('view-acc-holder').textContent = bankData.accHolder || 'Not added';
+        document.getElementById('view-bank-name').textContent = bankData.bankName || 'Not added';
+        document.getElementById('view-bank-branch').textContent = bankData.branch || 'Not added';
+        document.getElementById('view-acc-no').textContent = bankData.accNo || 'Not added';
+        document.getElementById('view-ifsc').textContent = bankData.ifsc || 'Not added';
+        document.getElementById('view-upi').textContent = bankData.upi || 'Not added';
+
+        document.getElementById('input-acc-holder').value = bankData.accHolder || '';
+        document.getElementById('input-bank-name').value = bankData.bankName || '';
+        document.getElementById('input-bank-branch').value = bankData.branch || '';
+        document.getElementById('input-acc-no').value = bankData.accNo || '';
+        document.getElementById('input-ifsc').value = bankData.ifsc || '';
+        document.getElementById('input-upi').value = bankData.upi || '';
+      }
+    }
+
+    function formatSecsToMinSec(totalSeconds) {
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = totalSeconds % 60;
+      return `${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
     }
 
     function generateMeetingLink() {
@@ -475,62 +511,110 @@
     }
 
     async function enterRecordingRoom() {
-      isHost = true; historySaved = false; userDisconnectedManual = false; switchPage(5);
+      isHost = true;
+      historySaved = false;
+      userDisconnectedManual = false;
+      connectRetryCount = 0;
+      currentSessionCaller = userData.name;
+      currentSessionPartner = 'Waiting...';
+      switchPage(5);
 
       document.getElementById('room-caller-name').textContent = `${userData.name} (You)`;
       document.getElementById('room-receiver-name').textContent = `Waiting for partner...`;
       document.getElementById('room-session-tag').textContent = `${currentPairId} · ${(userData.lang || 'SANTALI').toUpperCase()}`;
       document.getElementById('host-controls').classList.remove('hidden');
 
-      try { localStream = await getCleanAudioStream(); } catch(e) { alert("Microphone permission needed!"); return; }
+      try {
+        localStream = await getCleanAudioStream();
+      } catch(e) {
+        alert("Microphone permission needed!");
+        return;
+      }
+
       initializePeer(currentPairId);
     }
 
     async function startDirectGuestJoin(pairId, callerName, langName) {
-      historySaved = false; userDisconnectedManual = false; switchPage(5);
+      historySaved = false;
+      userDisconnectedManual = false;
+      connectRetryCount = 0;
+      currentSessionCaller = callerName || 'Caller';
+      currentSessionPartner = userData.name;
+
+      switchPage(5);
 
       document.getElementById('room-caller-name').textContent = callerName || 'Caller';
       document.getElementById('room-receiver-name').textContent = `${userData.name} (You)`;
       document.getElementById('room-session-tag').textContent = `${pairId} · ${(langName || 'SANTALI').toUpperCase()}`;
       document.getElementById('host-controls').classList.add('hidden');
 
-      try { localStream = await getCleanAudioStream(); } catch(e) { alert("Microphone permission needed!"); return; }
+      try {
+        localStream = await getCleanAudioStream();
+      } catch(e) {
+        alert("Microphone permission needed!");
+        return;
+      }
+
       initializePeer(null, pairId);
     }
 
     function initializePeer(customId = null, targetPairId = null) {
       if (peer) { try { peer.destroy(); } catch(e){} }
+
       peer = customId ? new Peer(customId, peerOptions) : new Peer(peerOptions);
 
       peer.on('open', (id) => {
-        if (!isHost && targetPairId) retryConnectToHost(targetPairId);
+        if (!isHost && targetPairId) {
+          retryConnectToHost(targetPairId);
+        }
       });
 
-      peer.on('connection', (conn) => { peerConn = conn; setupDataConnection(); });
+      peer.on('connection', (conn) => {
+        peerConn = conn;
+        setupDataConnection();
+      });
 
       peer.on('call', (call) => {
-        currentCall = call; call.answer(localStream);
+        currentCall = call;
+        call.answer(localStream);
+        
         call.on('stream', (rStream) => {
           remoteStream = rStream;
           const remoteEl = document.getElementById('remoteAudio');
-          remoteEl.srcObject = rStream; remoteEl.play().catch(e => {});
+          remoteEl.srcObject = rStream;
+          remoteEl.play().catch(e => console.log("Audio play error:", e));
           markConnectedState();
         });
       });
 
-      peer.on('disconnected', () => { if (!userDisconnectedManual && peer && !peer.destroyed) peer.reconnect(); });
+      peer.on('disconnected', () => {
+        if (!userDisconnectedManual && peer && !peer.destroyed) {
+          peer.reconnect();
+        }
+      });
+
+      peer.on('error', (err) => {
+        console.warn("PeerJS Error Type:", err.type);
+        if ((err.type === 'peer-unavailable' || err.type === 'network' || err.type === 'webrtc') && !isHost && connectRetryCount < 5) {
+          connectRetryCount++;
+          setTimeout(() => retryConnectToHost(targetPairId), 1500);
+        }
+      });
     }
 
     function retryConnectToHost(targetPairId) {
       if (!peer || peer.destroyed) return;
+
       peerConn = peer.connect(targetPairId, { reliable: true });
       setupDataConnection();
+
       currentCall = peer.call(targetPairId, localStream);
       if (currentCall) {
         currentCall.on('stream', (rStream) => {
           remoteStream = rStream;
           const remoteEl = document.getElementById('remoteAudio');
-          remoteEl.srcObject = rStream; remoteEl.play().catch(e => {});
+          remoteEl.srcObject = rStream;
+          remoteEl.play().catch(e => console.log("Audio play error:", e));
           markConnectedState();
         });
       }
@@ -539,15 +623,10 @@
     async function submitGuestJoin() {
       const name = document.getElementById('guest-name').value.trim();
       const gender = document.getElementById('guest-gender').value;
-      const upi = document.getElementById('guest-upi').value.trim();
-      const acc = document.getElementById('guest-bank-acc').value.trim();
-      const ifsc = document.getElementById('guest-bank-ifsc').value.trim();
-      const bname = document.getElementById('guest-bank-name').value.trim();
-
       if (!name) return alert('अपना नाम दर्ज करें');
       
-      userData.name = name; userData.gender = gender; userData.upi = upi;
-      userData.acc = acc; userData.ifsc = ifsc; userData.bname = bname;
+      userData.name = name;
+      userData.gender = gender;
       localStorage.setItem('rec_user_profile', JSON.stringify(userData));
 
       const urlParams = new URLSearchParams(window.location.search);
@@ -556,14 +635,31 @@
 
     function setupDataConnection() {
       if (!peerConn) return;
-      peerConn.on('open', () => peerConn.send({ type: 'JOINED', name: userData.name }));
+
+      peerConn.on('open', () => {
+        peerConn.send({ type: 'JOINED', name: userData.name });
+      });
+
       peerConn.on('data', (data) => {
         if (data.type === 'JOINED') {
-          if (isHost) document.getElementById('room-receiver-name').textContent = data.name;
+          if (isHost) {
+            currentSessionPartner = data.name;
+            document.getElementById('room-receiver-name').textContent = data.name;
+          }
           markConnectedState();
-        } else if (data.type === 'START_REC') executeStartRecording();
-        else if (data.type === 'STOP_REC') executeStopRecording();
-        else if (data.type === 'DISCONNECT') disconnectCall(false);
+        } else if (data.type === 'START_REC') {
+          executeStartRecording();
+        } else if (data.type === 'STOP_REC') {
+          executeStopRecording();
+        } else if (data.type === 'DISCONNECT') {
+          disconnectCall(false);
+        }
+      });
+
+      peerConn.on('close', () => {
+        if (!userDisconnectedManual && isRecording) {
+          handleUnexpectedDisconnect();
+        }
       });
     }
 
@@ -571,6 +667,7 @@
       document.getElementById('receiver-dot').className = "w-2 h-2 rounded-full bg-emerald-500";
       document.getElementById('receiver-rec-indicator').textContent = "🔇 Noise Filter Active";
       document.getElementById('receiver-rec-indicator').className = "text-[10px] text-emerald-400 font-mono";
+
       document.getElementById('rec-status-badge').textContent = "Connected";
       document.getElementById('rec-status-badge').className = "text-xs bg-emerald-900/60 text-emerald-300 border border-emerald-700 px-2.5 py-1 rounded-full";
 
@@ -580,7 +677,8 @@
 
       if (isHost) {
         const btn = document.getElementById('btn-start-rec');
-        btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
       }
     }
 
@@ -590,7 +688,11 @@
     }
 
     function executeStartRecording() {
-      localChunks = []; remoteChunks = []; isRecording = true; historySaved = false;
+      localChunks = [];
+      remoteChunks = [];
+      isRecording = true;
+      historySaved = false;
+
       localRecorder = new MediaRecorder(localStream);
       localRecorder.ondataavailable = e => { if (e.data.size > 0) localChunks.push(e.data); };
       localRecorder.start(1000);
@@ -602,8 +704,19 @@
       }
 
       startTimer();
+
       document.getElementById('rec-status-badge').textContent = "● Recording";
       document.getElementById('rec-status-badge').className = "text-xs bg-rose-900/60 text-rose-300 border border-rose-700 px-2.5 py-1 rounded-full pulse-red";
+
+      document.getElementById('caller-rec-indicator').textContent = "🔴 Recording On (Clean)";
+      document.getElementById('caller-rec-indicator').className = "text-[10px] text-rose-400 font-mono pulse-red";
+
+      document.getElementById('receiver-rec-indicator').textContent = "🔴 Recording On (Clean)";
+      document.getElementById('receiver-rec-indicator').className = "text-[10px] text-rose-400 font-mono pulse-red";
+
+      const banner = document.getElementById('waiting-banner');
+      banner.textContent = "🔴 Live Noise-Filtered Dual Recording Active";
+      banner.className = "text-xs text-rose-400 bg-rose-950/40 border border-rose-800/60 py-1.5 px-4 rounded-full inline-block font-medium pulse-red";
 
       if (isHost) {
         document.getElementById('btn-start-rec').disabled = true;
@@ -620,18 +733,28 @@
 
     function executeStopRecording() {
       if (!isRecording && historySaved) return;
-      isRecording = false; stopTimer();
+      isRecording = false;
+      stopTimer();
 
       if (localRecorder && localRecorder.state !== 'inactive') localRecorder.stop();
       if (remoteRecorder && remoteRecorder.state !== 'inactive') remoteRecorder.stop();
 
       setTimeout(async () => {
         saveRecordedDataToHistory();
-        sendDataToGoogleSheet();
       }, 500);
 
       document.getElementById('rec-status-badge').textContent = "Stopped";
       document.getElementById('rec-status-badge').className = "text-xs bg-slate-700 px-2.5 py-1 rounded-full text-slate-400";
+
+      document.getElementById('caller-rec-indicator').textContent = "Mic: Idle";
+      document.getElementById('caller-rec-indicator').className = "text-[10px] text-slate-400 font-mono";
+
+      document.getElementById('receiver-rec-indicator').textContent = "Mic: Idle";
+      document.getElementById('receiver-rec-indicator').className = "text-[10px] text-slate-400 font-mono";
+
+      const banner = document.getElementById('waiting-banner');
+      banner.textContent = "⏹️ Dual Recording Completed & Saved";
+      banner.className = "text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
 
       if (isHost) {
         document.getElementById('btn-start-rec').disabled = false;
@@ -641,35 +764,11 @@
       }
     }
 
-    function sendDataToGoogleSheet() {
-      if (!GOOGLE_SHEET_URL) return;
-
-      let paymentDetailsStr = `UPI: ${userData.upi || 'N/A'}`;
-      if (userData.acc) paymentDetailsStr += ` | Bank: ${userData.bname || ''} A/C:${userData.acc} IFSC:${userData.ifsc || ''}`;
-
-      const payload = {
-        pairId: currentPairId || 'PAIR-DIRECT',
-        userName: userData.name || 'Unknown',
-        role: isHost ? 'Caller (Host)' : 'Receiver',
-        gender: userData.gender || 'N/A',
-        lang: userData.lang || 'SANTALI',
-        durationSecs: seconds,
-        durationText: document.getElementById('timer').textContent,
-        upi: paymentDetailsStr
-      };
-
-      fetch(GOOGLE_SHEET_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    }
-
     async function saveRecordedDataToHistory() {
-      if (historySaved || localChunks.length === 0) return;
-      historySaved = true;
+      if (historySaved) return;
+      if (localChunks.length === 0) return;
 
+      historySaved = true;
       localAudioBlob = new Blob(localChunks, { type: 'audio/wav' });
       remoteAudioBlob = remoteChunks.length > 0 ? new Blob(remoteChunks, { type: 'audio/wav' }) : localAudioBlob;
 
@@ -677,14 +776,12 @@
       document.getElementById('dl-remote').href = URL.createObjectURL(remoteAudioBlob);
       document.getElementById('download-section').classList.remove('hidden');
 
-      if (isHost) callerCallsCount++; else receiverCallsCount++;
-
-      let numericAmt = 0;
-      let estEarnings = "₹ 0 (Min 10m required)";
-      if (seconds >= 600) {
-        numericAmt = (seconds / 3600) * 100;
-        numericAmt = Math.round(numericAmt * 100) / 100;
-        estEarnings = "₹ " + numericAmt.toFixed(2);
+      if (isHost) {
+        callerCallsCount++;
+        callerTotalSeconds += seconds;
+      } else {
+        receiverCallsCount++;
+        receiverTotalSeconds += seconds;
       }
 
       const localBase64 = await blobToBase64(localAudioBlob);
@@ -692,36 +789,69 @@
 
       const record = {
         id: currentPairId || 'PAIR-DISCONNECTED',
+        callerName: currentSessionCaller,
+        partnerName: isHost ? currentSessionPartner : userData.name,
         user: userData.name || 'User',
-        role: isHost ? 'Caller' : 'Receiver',
         lang: userData.lang || 'SANTALI',
         duration: document.getElementById('timer').textContent,
-        durationSecs: seconds,
+        durationSeconds: seconds,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        earnings: estEarnings,
-        numericEarned: numericAmt,
+        date: new Date().toLocaleDateString(),
         localData: localBase64,
         remoteData: remoteBase64
       };
 
       callHistory.unshift(record);
       saveHistoryData();
-      renderDashboard();
+      updateHistoryUI();
     }
 
     function disconnectCall(sendSignal = true) {
       userDisconnectedManual = true;
-      if (sendSignal && peerConn && peerConn.open) { try { peerConn.send({ type: 'DISCONNECT' }); } catch(e){} }
-      if (isRecording) executeStopRecording();
-      if (localStream) localStream.getTracks().forEach(track => track.stop());
+
+      if (sendSignal && peerConn && peerConn.open) {
+        try { peerConn.send({ type: 'DISCONNECT' }); } catch(e){}
+      }
+
+      if (isRecording) {
+        executeStopRecording();
+      }
+
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+      }
+
       if (peerConn) try { peerConn.close(); } catch(e){}
       if (currentCall) try { currentCall.close(); } catch(e){}
       if (peer) try { peer.destroy(); } catch(e){}
-      switchPage(2);
+
+      document.getElementById('rec-status-badge').textContent = "Disconnected";
+      document.getElementById('rec-status-badge').className = "text-xs bg-rose-950 text-rose-400 border border-rose-800 px-2.5 py-1 rounded-full";
+
+      const banner = document.getElementById('waiting-banner');
+      banner.textContent = "❌ Call Disconnected / Session Ended";
+      banner.className = "text-xs text-rose-400 bg-rose-950/40 border border-rose-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
+
+      document.getElementById('receiver-dot').className = "w-2 h-2 rounded-full bg-rose-500";
+      document.getElementById('receiver-rec-indicator').textContent = "Disconnected";
+      document.getElementById('receiver-rec-indicator').className = "text-[10px] text-rose-400 font-mono";
+    }
+
+    function handleUnexpectedDisconnect() {
+      if (isRecording) {
+        executeStopRecording();
+      }
+      document.getElementById('rec-status-badge').textContent = "Signal Lost";
+      document.getElementById('rec-status-badge').className = "text-xs bg-amber-950 text-amber-400 border border-amber-800 px-2.5 py-1 rounded-full";
+
+      const banner = document.getElementById('waiting-banner');
+      banner.textContent = "⚠️ Signal Lost! Saving recorded audio...";
+      banner.className = "text-xs text-amber-400 bg-amber-950/40 border border-amber-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
     }
 
     function startTimer() {
-      seconds = 0; clearInterval(timerInterval);
+      seconds = 0;
+      clearInterval(timerInterval);
       timerInterval = setInterval(() => {
         seconds++;
         const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
@@ -744,24 +874,100 @@
     function downloadCurrentZip() {
       if (!localAudioBlob) return alert("Audio files missing.");
       const zip = new JSZip();
-      zip.file(`Caller_Audio_${currentPairId}.wav`, localAudioBlob);
-      if (remoteAudioBlob) zip.file(`Receiver_Audio_${currentPairId}.wav`, remoteAudioBlob);
-      zip.generateAsync({ type: "blob" }).then(content => saveAs(content, `${currentPairId}_DualAudio.zip`));
+      
+      const hostName = isHost ? "Caller" : "Receiver";
+      const remoteName = isHost ? "Receiver" : "Caller";
+
+      zip.file(`${hostName}_Audio_${currentPairId}.wav`, localAudioBlob);
+      if (remoteAudioBlob) {
+        zip.file(`${remoteName}_Audio_${currentPairId}.wav`, remoteAudioBlob);
+      }
+
+      const metadataContent = 
+`==============================================
+          HIRLA DUAL RECORDING DETAILS        
+==============================================
+Pair ID: ${currentPairId}
+Caller Name: ${currentSessionCaller}
+Partner Name: ${isHost ? currentSessionPartner : userData.name}
+Language: ${userData.lang || 'SANTALI'}
+Duration: ${document.getElementById('timer').textContent}
+Recorded Date: ${new Date().toLocaleDateString()}
+Recorded Time: ${new Date().toLocaleTimeString()}
+Company / Platform: HIRLA
+==============================================`;
+
+      zip.file(`Details_${currentPairId}.txt`, metadataContent);
+
+      zip.generateAsync({ type: "blob" }).then(content => {
+        saveAs(content, `${currentPairId}_HIRLA_DualAudio.zip`);
+      });
+    }
+
+    function downloadHistoryZip(index) {
+      const record = callHistory[index];
+      if (!record || !record.localData) return alert("Audio record missing.");
+
+      const zip = new JSZip();
+      const localBlob = dataURItoBlob(record.localData);
+      const remoteBlob = record.remoteData ? dataURItoBlob(record.remoteData) : localBlob;
+
+      zip.file(`Caller_Audio_${record.id}.wav`, localBlob);
+      zip.file(`Receiver_Audio_${record.id}.wav`, remoteBlob);
+
+      const metadataContent = 
+`==============================================
+          HIRLA DUAL RECORDING DETAILS        
+==============================================
+Pair ID: ${record.id}
+Caller Name: ${record.callerName || 'Caller'}
+Partner Name: ${record.partnerName || 'Partner'}
+Language: ${record.lang}
+Duration: ${record.duration}
+Recorded Date: ${record.date || 'N/A'}
+Recorded Time: ${record.time || 'N/A'}
+Company / Platform: HIRLA
+==============================================`;
+
+      zip.file(`Details_${record.id}.txt`, metadataContent);
+
+      zip.generateAsync({ type: "blob" }).then(content => {
+        saveAs(content, `${record.id}_${record.lang}_HIRLA.zip`);
+      });
+    }
+
+    function dataURItoBlob(dataURI) {
+      const byteString = atob(dataURI.split(',')[1]);
+      const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+      return new Blob([ab], { type: mimeString });
     }
 
     function saveHistoryData() {
       localStorage.setItem('rec_caller_count', callerCallsCount);
       localStorage.setItem('rec_receiver_count', receiverCallsCount);
-      localStorage.setItem('rec_paid_by_user', totalPaidByUser);
-      try { localStorage.setItem('rec_history_list', JSON.stringify(callHistory.slice(0, 10))); } catch(e) {}
+      localStorage.setItem('rec_caller_sec', callerTotalSeconds);
+      localStorage.setItem('rec_receiver_sec', receiverTotalSeconds);
+
+      try {
+        localStorage.setItem('rec_history_list', JSON.stringify(callHistory.slice(0, 10)));
+      } catch(e) {}
     }
 
     function loadSavedData() {
       const prof = localStorage.getItem('rec_user_profile');
       if (prof) userData = JSON.parse(prof);
+
+      const bnk = localStorage.getItem('rec_bank_details');
+      if (bnk) bankData = JSON.parse(bnk);
+
       callerCallsCount = parseInt(localStorage.getItem('rec_caller_count')) || 0;
       receiverCallsCount = parseInt(localStorage.getItem('rec_receiver_count')) || 0;
-      totalPaidByUser = parseFloat(localStorage.getItem('rec_paid_by_user')) || 0;
+      callerTotalSeconds = parseInt(localStorage.getItem('rec_caller_sec')) || 0;
+      receiverTotalSeconds = parseInt(localStorage.getItem('rec_receiver_sec')) || 0;
+
       const hist = localStorage.getItem('rec_history_list');
       if (hist) callHistory = JSON.parse(hist);
     }
@@ -769,26 +975,51 @@
     function updateHistoryUI() {
       document.getElementById('count-caller').textContent = callerCallsCount;
       document.getElementById('count-receiver').textContent = receiverCallsCount;
+
+      document.getElementById('dur-caller').textContent = formatSecsToMinSec(callerTotalSeconds);
+      document.getElementById('dur-receiver').textContent = formatSecsToMinSec(receiverTotalSeconds);
+
+      // COMBINED TOTALS
+      const totalCallsCombined = callerCallsCount + receiverCallsCount;
+      const totalSecsCombined = callerTotalSeconds + receiverTotalSeconds;
+
+      document.getElementById('count-total-combined').textContent = totalCallsCombined;
+      document.getElementById('dur-total-combined').textContent = formatSecsToMinSec(totalSecsCombined);
+
       const historyList = document.getElementById('history-list');
       if (!callHistory || callHistory.length === 0) {
         historyList.innerHTML = `<p class="text-xs text-slate-500 text-center py-4 bg-slate-900/50 rounded-lg">कोई रिकॉर्डिंग हिस्ट्री मौजूद नहीं है।</p>`;
         return;
       }
+
       historyList.innerHTML = callHistory.map((rec, i) => `
-        <div class="bg-slate-900/90 border border-slate-700/80 p-2.5 rounded-xl flex items-center justify-between text-xs">
-          <div>
-            <span class="font-mono font-bold text-indigo-400">${rec.id}</span>
-            <span class="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded ml-1 border border-slate-700">${rec.role || 'Call'}</span>
-            <p class="text-slate-400 text-[11px] mt-0.5">⏱️ Duration: ${rec.duration} | 🕒 ${rec.time}</p>
-            <p class="text-emerald-400 font-medium text-[11px] mt-0.5">💰 Earned: ${rec.earnings || '₹ 0'}</p>
+        <div class="bg-slate-900/90 border border-slate-700/80 p-3 rounded-xl flex items-center justify-between text-xs transition hover:border-slate-600">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="font-mono font-bold text-indigo-400">${rec.id}</span>
+              <span class="bg-slate-800 text-amber-300 font-mono text-[10px] px-2 py-0.5 rounded border border-slate-700">${rec.lang}</span>
+            </div>
+            <p class="text-slate-300 text-[11px]">👤 Caller: <span class="text-slate-100 font-medium">${rec.callerName || 'N/A'}</span> | Partner: <span class="text-slate-100 font-medium">${rec.partnerName || 'N/A'}</span></p>
+            <p class="text-slate-400 text-[10px]">⏱️ ${rec.duration} | 🕒 ${rec.time}</p>
           </div>
-          <button onclick="downloadHistoryZip(${i})" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1 rounded-md text-xs transition">📦 ZIP</button>
+          <button onclick="downloadHistoryZip(${i})" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1">
+            <span>📦</span> ZIP
+          </button>
         </div>
       `).join('');
     }
 
-    function goToDashboardAndRefresh() { renderDashboard(); switchPage(2); }
-    function resetProfile() { if (confirm('क्या आप प्रोफाइल रीसेट करना चाहते हैं?')) { localStorage.clear(); location.reload(); } }
+    function goToDashboardAndRefresh() {
+      renderDashboard();
+      switchPage(2);
+    }
+
+    function resetProfile() {
+      if (confirm('क्या आप प्रोफाइल रीसेट करना चाहते हैं?')) {
+        localStorage.clear();
+        location.reload();
+      }
+    }
   </script>
 </body>
 </html>
