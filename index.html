@@ -128,16 +128,31 @@
       </button>
 
       <!-- CALL METRICS DISPLAY -->
-      <div class="grid grid-cols-2 gap-4">
-        <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-center">
-          <p class="text-xs text-slate-400">Total Caller Calls</p>
-          <p id="count-caller" class="text-2xl font-bold text-indigo-400 mt-1">0</p>
-          <p class="text-[11px] text-slate-400 mt-1">Duration: <span id="dur-caller" class="font-mono text-indigo-300 font-semibold">00m 00s</span></p>
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-center">
+            <p class="text-xs text-slate-400">Total Caller Calls</p>
+            <p id="count-caller" class="text-2xl font-bold text-indigo-400 mt-1">0</p>
+            <p class="text-[11px] text-slate-400 mt-1">Duration: <span id="dur-caller" class="font-mono text-indigo-300 font-semibold">00m 00s</span></p>
+          </div>
+          <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-center">
+            <p class="text-xs text-slate-400">Total Receiver Calls</p>
+            <p id="count-receiver" class="text-2xl font-bold text-cyan-400 mt-1">0</p>
+            <p class="text-[11px] text-slate-400 mt-1">Duration: <span id="dur-receiver" class="font-mono text-cyan-300 font-semibold">00m 00s</span></p>
+          </div>
         </div>
-        <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-center">
-          <p class="text-xs text-slate-400">Total Receiver Calls</p>
-          <p id="count-receiver" class="text-2xl font-bold text-cyan-400 mt-1">0</p>
-          <p class="text-[11px] text-slate-400 mt-1">Duration: <span id="dur-receiver" class="font-mono text-cyan-300 font-semibold">00m 00s</span></p>
+
+        <!-- TOTAL COMBINED CALLS & MINUTES -->
+        <div class="bg-slate-900/90 border border-emerald-500/40 p-3.5 rounded-xl flex items-center justify-between text-center">
+          <div>
+            <p class="text-[11px] text-slate-400 uppercase tracking-wider">Total Calls Made</p>
+            <p id="count-total-combined" class="text-xl font-bold text-emerald-400 mt-0.5">0</p>
+          </div>
+          <div class="h-8 w-px bg-slate-700"></div>
+          <div>
+            <p class="text-[11px] text-slate-400 uppercase tracking-wider">Total Combined Duration</p>
+            <p id="dur-total-combined" class="text-xl font-mono font-bold text-amber-400 mt-0.5">00m 00s</p>
+          </div>
         </div>
       </div>
 
@@ -153,6 +168,7 @@
         <div id="bank-view" class="text-xs space-y-1 text-slate-300">
           <p><span class="text-slate-500">Account Holder:</span> <span id="view-acc-holder" class="font-medium">Not added</span></p>
           <p><span class="text-slate-500">Bank Name:</span> <span id="view-bank-name" class="font-medium">Not added</span></p>
+          <p><span class="text-slate-500">Branch:</span> <span id="view-bank-branch" class="font-medium">Not added</span></p>
           <p><span class="text-slate-500">Account No:</span> <span id="view-acc-no" class="font-mono font-medium">Not added</span></p>
           <p><span class="text-slate-500">IFSC Code:</span> <span id="view-ifsc" class="font-mono font-medium">Not added</span></p>
           <p><span class="text-slate-500">UPI ID:</span> <span id="view-upi" class="font-mono font-semibold text-emerald-400">Not added</span></p>
@@ -161,6 +177,7 @@
         <div id="bank-form" class="hidden space-y-2 text-xs">
           <input type="text" id="input-acc-holder" placeholder="Account Holder Name" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
           <input type="text" id="input-bank-name" placeholder="Bank Name (e.g., SBI)" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <input type="text" id="input-bank-branch" placeholder="Branch Name (e.g., Main Branch Ranchi)" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
           <input type="text" id="input-acc-no" placeholder="Account Number" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
           <input type="text" id="input-ifsc" placeholder="IFSC Code" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
           <input type="text" id="input-upi" placeholder="UPI ID (e.g., user@upi)" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
@@ -447,6 +464,7 @@
       bankData = {
         accHolder: document.getElementById('input-acc-holder').value.trim(),
         bankName: document.getElementById('input-bank-name').value.trim(),
+        branch: document.getElementById('input-bank-branch').value.trim(),
         accNo: document.getElementById('input-acc-no').value.trim(),
         ifsc: document.getElementById('input-ifsc').value.trim(),
         upi: document.getElementById('input-upi').value.trim()
@@ -457,15 +475,17 @@
     }
 
     function renderBankUI() {
-      if (bankData && bankData.accHolder) {
+      if (bankData) {
         document.getElementById('view-acc-holder').textContent = bankData.accHolder || 'Not added';
         document.getElementById('view-bank-name').textContent = bankData.bankName || 'Not added';
+        document.getElementById('view-bank-branch').textContent = bankData.branch || 'Not added';
         document.getElementById('view-acc-no').textContent = bankData.accNo || 'Not added';
         document.getElementById('view-ifsc').textContent = bankData.ifsc || 'Not added';
         document.getElementById('view-upi').textContent = bankData.upi || 'Not added';
 
         document.getElementById('input-acc-holder').value = bankData.accHolder || '';
         document.getElementById('input-bank-name').value = bankData.bankName || '';
+        document.getElementById('input-bank-branch').value = bankData.branch || '';
         document.getElementById('input-acc-no').value = bankData.accNo || '';
         document.getElementById('input-ifsc').value = bankData.ifsc || '';
         document.getElementById('input-upi').value = bankData.upi || '';
@@ -863,7 +883,6 @@
         zip.file(`${remoteName}_Audio_${currentPairId}.wav`, remoteAudioBlob);
       }
 
-      // METADATA TXT FILE INSIDE ZIP
       const metadataContent = 
 `==============================================
           HIRLA DUAL RECORDING DETAILS        
@@ -959,6 +978,13 @@ Company / Platform: HIRLA
 
       document.getElementById('dur-caller').textContent = formatSecsToMinSec(callerTotalSeconds);
       document.getElementById('dur-receiver').textContent = formatSecsToMinSec(receiverTotalSeconds);
+
+      // COMBINED TOTALS
+      const totalCallsCombined = callerCallsCount + receiverCallsCount;
+      const totalSecsCombined = callerTotalSeconds + receiverTotalSeconds;
+
+      document.getElementById('count-total-combined').textContent = totalCallsCombined;
+      document.getElementById('dur-total-combined').textContent = formatSecsToMinSec(totalSecsCombined);
 
       const historyList = document.getElementById('history-list');
       if (!callHistory || callHistory.length === 0) {
