@@ -33,7 +33,7 @@
           <h2 class="text-2xl font-bold text-indigo-400">👤 User Registration</h2>
           <p class="text-xs text-slate-400 mt-1">अपनी जानकारी दर्ज करके शुरू करें</p>
         </div>
-        <span class="text-sm font-extrabold text-amber-400 tracking-wider bg-slate-900 px-3 py-1 rounded-lg border border-slate-700">HIRLA</span>
+        <span class="text-xl font-black text-amber-400 border border-amber-500/40 px-3 py-1 rounded-xl bg-slate-900">HIRLA</span>
       </div>
 
       <div class="space-y-4">
@@ -69,6 +69,11 @@
           </select>
         </div>
 
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">UPI ID (For Payments) / पेमेंट के लिए UPI ID</label>
+          <input type="text" id="reg-upi" placeholder="e.g. username@upi" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+
         <button onclick="saveRegistrationAndProceed()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition mt-4 shadow-lg">
           Start Setup ➔
         </button>
@@ -84,7 +89,7 @@
             Invited by <span id="guest-caller-name" class="font-semibold text-indigo-300">Caller</span> · Language: <span id="guest-caller-lang" class="font-semibold font-mono text-amber-300">SANTALI</span>
           </p>
         </div>
-        <span class="text-xs font-bold text-amber-400 bg-slate-900 px-2.5 py-1 rounded border border-slate-700">HIRLA</span>
+        <span class="text-xl font-black text-amber-400 border border-amber-500/40 px-3 py-1 rounded-xl bg-slate-900">HIRLA</span>
       </div>
 
       <div class="space-y-4">
@@ -102,6 +107,11 @@
           </select>
         </div>
 
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">UPI ID (Payment)</label>
+          <input type="text" id="guest-upi" placeholder="e.g. username@upi" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+        </div>
+
         <button onclick="submitGuestJoin()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg transition shadow-lg mt-2">
           Join Recording Room ➔
         </button>
@@ -112,10 +122,7 @@
     <div id="page-2" class="hidden space-y-6">
       <div class="flex justify-between items-start border-b border-slate-700 pb-3">
         <div>
-          <div class="flex items-center gap-2">
-            <h2 id="dash-user-name" class="text-xl font-bold text-slate-100">User Dashboard</h2>
-            <span class="text-xs font-extrabold text-amber-400 bg-slate-900 px-2 py-0.5 rounded border border-amber-500/40">HIRLA</span>
-          </div>
+          <h2 id="dash-user-name" class="text-xl font-bold text-slate-100">User Dashboard</h2>
           <p id="dash-user-info" class="text-xs text-indigo-400 mt-0.5"></p>
         </div>
         <button onclick="resetProfile()" class="text-xs bg-rose-900/40 hover:bg-rose-800/60 text-rose-300 border border-rose-700/60 px-2.5 py-1 rounded-md transition flex items-center gap-1">
@@ -127,65 +134,17 @@
         <span>🤝</span> Invite Partner
       </button>
 
-      <!-- CALL METRICS DISPLAY -->
-      <div class="space-y-3">
-        <div class="grid grid-cols-2 gap-4">
-          <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-center">
-            <p class="text-xs text-slate-400">Total Caller Calls</p>
-            <p id="count-caller" class="text-2xl font-bold text-indigo-400 mt-1">0</p>
-            <p class="text-[11px] text-slate-400 mt-1">Duration: <span id="dur-caller" class="font-mono text-indigo-300 font-semibold">00m 00s</span></p>
-          </div>
-          <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-center">
-            <p class="text-xs text-slate-400">Total Receiver Calls</p>
-            <p id="count-receiver" class="text-2xl font-bold text-cyan-400 mt-1">0</p>
-            <p class="text-[11px] text-slate-400 mt-1">Duration: <span id="dur-receiver" class="font-mono text-cyan-300 font-semibold">00m 00s</span></p>
-          </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-center">
+          <p class="text-xs text-slate-400">Total Caller Calls</p>
+          <p id="count-caller" class="text-2xl font-bold text-indigo-400 mt-1">0</p>
         </div>
-
-        <!-- TOTAL COMBINED CALLS & MINUTES -->
-        <div class="bg-slate-900/90 border border-emerald-500/40 p-3.5 rounded-xl flex items-center justify-between text-center">
-          <div>
-            <p class="text-[11px] text-slate-400 uppercase tracking-wider">Total Calls Made</p>
-            <p id="count-total-combined" class="text-xl font-bold text-emerald-400 mt-0.5">0</p>
-          </div>
-          <div class="h-8 w-px bg-slate-700"></div>
-          <div>
-            <p class="text-[11px] text-slate-400 uppercase tracking-wider">Total Combined Duration</p>
-            <p id="dur-total-combined" class="text-xl font-mono font-bold text-amber-400 mt-0.5">00m 00s</p>
-          </div>
+        <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-center">
+          <p class="text-xs text-slate-400">Total Receiver Calls</p>
+          <p id="count-receiver" class="text-2xl font-bold text-cyan-400 mt-1">0</p>
         </div>
       </div>
 
-      <!-- PASSBOOK & UPI DETAILS SECTION -->
-      <div class="bg-slate-900/80 border border-slate-700 p-4 rounded-xl space-y-3">
-        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
-            <span>💳</span> Bank Passbook & UPI Details
-          </h3>
-          <button onclick="toggleBankEdit()" id="btn-edit-bank" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-slate-600">Edit</button>
-        </div>
-
-        <div id="bank-view" class="text-xs space-y-1 text-slate-300">
-          <p><span class="text-slate-500">Account Holder:</span> <span id="view-acc-holder" class="font-medium">Not added</span></p>
-          <p><span class="text-slate-500">Bank Name:</span> <span id="view-bank-name" class="font-medium">Not added</span></p>
-          <p><span class="text-slate-500">Branch:</span> <span id="view-bank-branch" class="font-medium">Not added</span></p>
-          <p><span class="text-slate-500">Account No:</span> <span id="view-acc-no" class="font-mono font-medium">Not added</span></p>
-          <p><span class="text-slate-500">IFSC Code:</span> <span id="view-ifsc" class="font-mono font-medium">Not added</span></p>
-          <p><span class="text-slate-500">UPI ID:</span> <span id="view-upi" class="font-mono font-semibold text-emerald-400">Not added</span></p>
-        </div>
-
-        <div id="bank-form" class="hidden space-y-2 text-xs">
-          <input type="text" id="input-acc-holder" placeholder="Account Holder Name" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
-          <input type="text" id="input-bank-name" placeholder="Bank Name (e.g., SBI)" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
-          <input type="text" id="input-bank-branch" placeholder="Branch Name (e.g., Main Branch Ranchi)" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
-          <input type="text" id="input-acc-no" placeholder="Account Number" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
-          <input type="text" id="input-ifsc" placeholder="IFSC Code" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
-          <input type="text" id="input-upi" placeholder="UPI ID (e.g., user@upi)" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
-          <button onclick="saveBankDetails()" class="w-full bg-amber-600 hover:bg-amber-500 text-slate-900 font-bold py-2 rounded transition">Save Bank Details</button>
-        </div>
-      </div>
-
-      <!-- PREVIOUS RECORDINGS HISTORY -->
       <div class="space-y-3">
         <h3 class="text-sm font-semibold text-slate-300">Previous Recording Data / History</h3>
         <div id="history-list" class="space-y-2 max-h-56 overflow-y-auto pr-1">
@@ -318,7 +277,7 @@
           </div>
 
           <div class="flex items-center justify-between bg-slate-800 p-2.5 rounded border border-slate-700">
-            <span class="text-xs text-amber-300 font-medium">3. ZIP Package (Dual Audio + Metadata)</span>
+            <span class="text-xs text-amber-300 font-medium">3. ZIP Package (Dual Clean Audio)</span>
             <button onclick="downloadCurrentZip()" class="text-xs bg-amber-600 hover:bg-amber-500 px-3 py-1.5 rounded font-medium">📦 Download ZIP</button>
           </div>
         </div>
@@ -332,8 +291,10 @@
   </div>
 
   <script>
+    // 🔗 आपका GOOGLE WEB APP URL लिंक यहाँ जोड़ दिया गया है
+    const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxqVlOSaS31M3VZHkSEQHbZkkT7-wLVukcBibMFuKVteSKPDv2FKdFPTn8IHGZOIALv0w/exec";
+
     let userData = {};
-    let bankData = {};
     let currentPairId = '';
     let isHost = true;
     let peer = null;
@@ -355,11 +316,6 @@
 
     let callerCallsCount = 0;
     let receiverCallsCount = 0;
-    let callerTotalSeconds = 0;
-    let receiverTotalSeconds = 0;
-    let currentSessionPartner = 'Unknown Partner';
-    let currentSessionCaller = 'Unknown Caller';
-
     let callHistory = [];
 
     const peerOptions = {
@@ -369,8 +325,6 @@
           { urls: 'stun:stun.l.google.com:19302' },
           { urls: 'stun:stun1.l.google.com:19302' },
           { urls: 'stun:stun2.l.google.com:19302' },
-          { urls: 'stun:stun3.l.google.com:19302' },
-          { urls: 'stun:stun4.l.google.com:19302' },
           { urls: 'stun:global.stun.twilio.com:3478' }
         ],
         iceCandidatePoolSize: 10,
@@ -380,12 +334,7 @@
 
     async function getCleanAudioStream() {
       return await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          sampleRate: 48000
-        }
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 48000 }
       });
     }
 
@@ -400,7 +349,6 @@
       if (pairFromUrl) {
         isHost = false;
         currentPairId = pairFromUrl;
-        currentSessionCaller = callerFromUrl || 'Caller';
         
         if (userData && userData.name) {
           startDirectGuestJoin(pairFromUrl, callerFromUrl, langFromUrl);
@@ -430,9 +378,10 @@
       const name = document.getElementById('reg-name').value.trim();
       const gender = document.getElementById('reg-gender').value;
       const lang = document.getElementById('reg-lang').value;
+      const upi = document.getElementById('reg-upi').value.trim();
 
       if (!name || !gender || !lang) { alert('कृपया सभी जानकारी भरें।'); return; }
-      userData = { name, gender, lang };
+      userData = { name, gender, lang, upi };
       localStorage.setItem('rec_user_profile', JSON.stringify(userData));
       renderDashboard();
       switchPage(2);
@@ -440,62 +389,8 @@
 
     function renderDashboard() {
       document.getElementById('dash-user-name').textContent = `Welcome, ${userData.name}`;
-      document.getElementById('dash-user-info').textContent = `Gender: ${userData.gender} | Language: ${userData.lang}`;
-      renderBankUI();
+      document.getElementById('dash-user-info').textContent = `Gender: ${userData.gender} | Language: ${userData.lang} | UPI: ${userData.upi || 'N/A'}`;
       updateHistoryUI();
-    }
-
-    function toggleBankEdit() {
-      const form = document.getElementById('bank-form');
-      const view = document.getElementById('bank-view');
-      const btn = document.getElementById('btn-edit-bank');
-      if (form.classList.contains('hidden')) {
-        form.classList.remove('hidden');
-        view.classList.add('hidden');
-        btn.textContent = 'Cancel';
-      } else {
-        form.classList.add('hidden');
-        view.classList.remove('hidden');
-        btn.textContent = 'Edit';
-      }
-    }
-
-    function saveBankDetails() {
-      bankData = {
-        accHolder: document.getElementById('input-acc-holder').value.trim(),
-        bankName: document.getElementById('input-bank-name').value.trim(),
-        branch: document.getElementById('input-bank-branch').value.trim(),
-        accNo: document.getElementById('input-acc-no').value.trim(),
-        ifsc: document.getElementById('input-ifsc').value.trim(),
-        upi: document.getElementById('input-upi').value.trim()
-      };
-      localStorage.setItem('rec_bank_details', JSON.stringify(bankData));
-      renderBankUI();
-      toggleBankEdit();
-    }
-
-    function renderBankUI() {
-      if (bankData) {
-        document.getElementById('view-acc-holder').textContent = bankData.accHolder || 'Not added';
-        document.getElementById('view-bank-name').textContent = bankData.bankName || 'Not added';
-        document.getElementById('view-bank-branch').textContent = bankData.branch || 'Not added';
-        document.getElementById('view-acc-no').textContent = bankData.accNo || 'Not added';
-        document.getElementById('view-ifsc').textContent = bankData.ifsc || 'Not added';
-        document.getElementById('view-upi').textContent = bankData.upi || 'Not added';
-
-        document.getElementById('input-acc-holder').value = bankData.accHolder || '';
-        document.getElementById('input-bank-name').value = bankData.bankName || '';
-        document.getElementById('input-bank-branch').value = bankData.branch || '';
-        document.getElementById('input-acc-no').value = bankData.accNo || '';
-        document.getElementById('input-ifsc').value = bankData.ifsc || '';
-        document.getElementById('input-upi').value = bankData.upi || '';
-      }
-    }
-
-    function formatSecsToMinSec(totalSeconds) {
-      const mins = Math.floor(totalSeconds / 60);
-      const secs = totalSeconds % 60;
-      return `${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
     }
 
     function generateMeetingLink() {
@@ -511,110 +406,62 @@
     }
 
     async function enterRecordingRoom() {
-      isHost = true;
-      historySaved = false;
-      userDisconnectedManual = false;
-      connectRetryCount = 0;
-      currentSessionCaller = userData.name;
-      currentSessionPartner = 'Waiting...';
-      switchPage(5);
+      isHost = true; historySaved = false; userDisconnectedManual = false; connectRetryCount = 0; switchPage(5);
 
       document.getElementById('room-caller-name').textContent = `${userData.name} (You)`;
       document.getElementById('room-receiver-name').textContent = `Waiting for partner...`;
       document.getElementById('room-session-tag').textContent = `${currentPairId} · ${(userData.lang || 'SANTALI').toUpperCase()}`;
       document.getElementById('host-controls').classList.remove('hidden');
 
-      try {
-        localStream = await getCleanAudioStream();
-      } catch(e) {
-        alert("Microphone permission needed!");
-        return;
-      }
-
+      try { localStream = await getCleanAudioStream(); } catch(e) { alert("Microphone permission needed!"); return; }
       initializePeer(currentPairId);
     }
 
     async function startDirectGuestJoin(pairId, callerName, langName) {
-      historySaved = false;
-      userDisconnectedManual = false;
-      connectRetryCount = 0;
-      currentSessionCaller = callerName || 'Caller';
-      currentSessionPartner = userData.name;
-
-      switchPage(5);
+      historySaved = false; userDisconnectedManual = false; connectRetryCount = 0; switchPage(5);
 
       document.getElementById('room-caller-name').textContent = callerName || 'Caller';
       document.getElementById('room-receiver-name').textContent = `${userData.name} (You)`;
       document.getElementById('room-session-tag').textContent = `${pairId} · ${(langName || 'SANTALI').toUpperCase()}`;
       document.getElementById('host-controls').classList.add('hidden');
 
-      try {
-        localStream = await getCleanAudioStream();
-      } catch(e) {
-        alert("Microphone permission needed!");
-        return;
-      }
-
+      try { localStream = await getCleanAudioStream(); } catch(e) { alert("Microphone permission needed!"); return; }
       initializePeer(null, pairId);
     }
 
     function initializePeer(customId = null, targetPairId = null) {
       if (peer) { try { peer.destroy(); } catch(e){} }
-
       peer = customId ? new Peer(customId, peerOptions) : new Peer(peerOptions);
 
       peer.on('open', (id) => {
-        if (!isHost && targetPairId) {
-          retryConnectToHost(targetPairId);
-        }
+        if (!isHost && targetPairId) retryConnectToHost(targetPairId);
       });
 
-      peer.on('connection', (conn) => {
-        peerConn = conn;
-        setupDataConnection();
-      });
+      peer.on('connection', (conn) => { peerConn = conn; setupDataConnection(); });
 
       peer.on('call', (call) => {
-        currentCall = call;
-        call.answer(localStream);
-        
+        currentCall = call; call.answer(localStream);
         call.on('stream', (rStream) => {
           remoteStream = rStream;
           const remoteEl = document.getElementById('remoteAudio');
-          remoteEl.srcObject = rStream;
-          remoteEl.play().catch(e => console.log("Audio play error:", e));
+          remoteEl.srcObject = rStream; remoteEl.play().catch(e => {});
           markConnectedState();
         });
       });
 
-      peer.on('disconnected', () => {
-        if (!userDisconnectedManual && peer && !peer.destroyed) {
-          peer.reconnect();
-        }
-      });
-
-      peer.on('error', (err) => {
-        console.warn("PeerJS Error Type:", err.type);
-        if ((err.type === 'peer-unavailable' || err.type === 'network' || err.type === 'webrtc') && !isHost && connectRetryCount < 5) {
-          connectRetryCount++;
-          setTimeout(() => retryConnectToHost(targetPairId), 1500);
-        }
-      });
+      peer.on('disconnected', () => { if (!userDisconnectedManual && peer && !peer.destroyed) peer.reconnect(); });
     }
 
     function retryConnectToHost(targetPairId) {
       if (!peer || peer.destroyed) return;
-
       peerConn = peer.connect(targetPairId, { reliable: true });
       setupDataConnection();
-
       currentCall = peer.call(targetPairId, localStream);
       if (currentCall) {
         currentCall.on('stream', (rStream) => {
           remoteStream = rStream;
           const remoteEl = document.getElementById('remoteAudio');
-          remoteEl.srcObject = rStream;
-          remoteEl.play().catch(e => console.log("Audio play error:", e));
+          remoteEl.srcObject = rStream; remoteEl.play().catch(e => {});
           markConnectedState();
         });
       }
@@ -623,10 +470,10 @@
     async function submitGuestJoin() {
       const name = document.getElementById('guest-name').value.trim();
       const gender = document.getElementById('guest-gender').value;
+      const upi = document.getElementById('guest-upi').value.trim();
       if (!name) return alert('अपना नाम दर्ज करें');
       
-      userData.name = name;
-      userData.gender = gender;
+      userData.name = name; userData.gender = gender; userData.upi = upi;
       localStorage.setItem('rec_user_profile', JSON.stringify(userData));
 
       const urlParams = new URLSearchParams(window.location.search);
@@ -635,31 +482,14 @@
 
     function setupDataConnection() {
       if (!peerConn) return;
-
-      peerConn.on('open', () => {
-        peerConn.send({ type: 'JOINED', name: userData.name });
-      });
-
+      peerConn.on('open', () => peerConn.send({ type: 'JOINED', name: userData.name }));
       peerConn.on('data', (data) => {
         if (data.type === 'JOINED') {
-          if (isHost) {
-            currentSessionPartner = data.name;
-            document.getElementById('room-receiver-name').textContent = data.name;
-          }
+          if (isHost) document.getElementById('room-receiver-name').textContent = data.name;
           markConnectedState();
-        } else if (data.type === 'START_REC') {
-          executeStartRecording();
-        } else if (data.type === 'STOP_REC') {
-          executeStopRecording();
-        } else if (data.type === 'DISCONNECT') {
-          disconnectCall(false);
-        }
-      });
-
-      peerConn.on('close', () => {
-        if (!userDisconnectedManual && isRecording) {
-          handleUnexpectedDisconnect();
-        }
+        } else if (data.type === 'START_REC') executeStartRecording();
+        else if (data.type === 'STOP_REC') executeStopRecording();
+        else if (data.type === 'DISCONNECT') disconnectCall(false);
       });
     }
 
@@ -667,7 +497,6 @@
       document.getElementById('receiver-dot').className = "w-2 h-2 rounded-full bg-emerald-500";
       document.getElementById('receiver-rec-indicator').textContent = "🔇 Noise Filter Active";
       document.getElementById('receiver-rec-indicator').className = "text-[10px] text-emerald-400 font-mono";
-
       document.getElementById('rec-status-badge').textContent = "Connected";
       document.getElementById('rec-status-badge').className = "text-xs bg-emerald-900/60 text-emerald-300 border border-emerald-700 px-2.5 py-1 rounded-full";
 
@@ -677,8 +506,7 @@
 
       if (isHost) {
         const btn = document.getElementById('btn-start-rec');
-        btn.disabled = false;
-        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed');
       }
     }
 
@@ -688,11 +516,7 @@
     }
 
     function executeStartRecording() {
-      localChunks = [];
-      remoteChunks = [];
-      isRecording = true;
-      historySaved = false;
-
+      localChunks = []; remoteChunks = []; isRecording = true; historySaved = false;
       localRecorder = new MediaRecorder(localStream);
       localRecorder.ondataavailable = e => { if (e.data.size > 0) localChunks.push(e.data); };
       localRecorder.start(1000);
@@ -704,19 +528,8 @@
       }
 
       startTimer();
-
       document.getElementById('rec-status-badge').textContent = "● Recording";
       document.getElementById('rec-status-badge').className = "text-xs bg-rose-900/60 text-rose-300 border border-rose-700 px-2.5 py-1 rounded-full pulse-red";
-
-      document.getElementById('caller-rec-indicator').textContent = "🔴 Recording On (Clean)";
-      document.getElementById('caller-rec-indicator').className = "text-[10px] text-rose-400 font-mono pulse-red";
-
-      document.getElementById('receiver-rec-indicator').textContent = "🔴 Recording On (Clean)";
-      document.getElementById('receiver-rec-indicator').className = "text-[10px] text-rose-400 font-mono pulse-red";
-
-      const banner = document.getElementById('waiting-banner');
-      banner.textContent = "🔴 Live Noise-Filtered Dual Recording Active";
-      banner.className = "text-xs text-rose-400 bg-rose-950/40 border border-rose-800/60 py-1.5 px-4 rounded-full inline-block font-medium pulse-red";
 
       if (isHost) {
         document.getElementById('btn-start-rec').disabled = true;
@@ -733,28 +546,18 @@
 
     function executeStopRecording() {
       if (!isRecording && historySaved) return;
-      isRecording = false;
-      stopTimer();
+      isRecording = false; stopTimer();
 
       if (localRecorder && localRecorder.state !== 'inactive') localRecorder.stop();
       if (remoteRecorder && remoteRecorder.state !== 'inactive') remoteRecorder.stop();
 
       setTimeout(async () => {
         saveRecordedDataToHistory();
+        sendDataToGoogleSheet(); // 👈 कॉल ख़त्म होने पर डेटा सीधे गूगल शीट में जाएगा
       }, 500);
 
       document.getElementById('rec-status-badge').textContent = "Stopped";
       document.getElementById('rec-status-badge').className = "text-xs bg-slate-700 px-2.5 py-1 rounded-full text-slate-400";
-
-      document.getElementById('caller-rec-indicator').textContent = "Mic: Idle";
-      document.getElementById('caller-rec-indicator').className = "text-[10px] text-slate-400 font-mono";
-
-      document.getElementById('receiver-rec-indicator').textContent = "Mic: Idle";
-      document.getElementById('receiver-rec-indicator').className = "text-[10px] text-slate-400 font-mono";
-
-      const banner = document.getElementById('waiting-banner');
-      banner.textContent = "⏹️ Dual Recording Completed & Saved";
-      banner.className = "text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
 
       if (isHost) {
         document.getElementById('btn-start-rec').disabled = false;
@@ -764,11 +567,33 @@
       }
     }
 
-    async function saveRecordedDataToHistory() {
-      if (historySaved) return;
-      if (localChunks.length === 0) return;
+    // 📊 GOOGLE SHEET में वर्क एंड पेमेंट डेटा भेजने का फ़ंक्शन
+    function sendDataToGoogleSheet() {
+      if (!GOOGLE_SHEET_URL) return;
 
+      const payload = {
+        pairId: currentPairId || 'PAIR-DIRECT',
+        userName: userData.name || 'Unknown',
+        role: isHost ? 'Caller (Host)' : 'Receiver',
+        gender: userData.gender || 'N/A',
+        lang: userData.lang || 'SANTALI',
+        durationSecs: seconds,
+        durationText: document.getElementById('timer').textContent,
+        upi: userData.upi || 'N/A'
+      };
+
+      fetch(GOOGLE_SHEET_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    async function saveRecordedDataToHistory() {
+      if (historySaved || localChunks.length === 0) return;
       historySaved = true;
+
       localAudioBlob = new Blob(localChunks, { type: 'audio/wav' });
       remoteAudioBlob = remoteChunks.length > 0 ? new Blob(remoteChunks, { type: 'audio/wav' }) : localAudioBlob;
 
@@ -776,27 +601,17 @@
       document.getElementById('dl-remote').href = URL.createObjectURL(remoteAudioBlob);
       document.getElementById('download-section').classList.remove('hidden');
 
-      if (isHost) {
-        callerCallsCount++;
-        callerTotalSeconds += seconds;
-      } else {
-        receiverCallsCount++;
-        receiverTotalSeconds += seconds;
-      }
+      if (isHost) callerCallsCount++; else receiverCallsCount++;
 
       const localBase64 = await blobToBase64(localAudioBlob);
       const remoteBase64 = await blobToBase64(remoteAudioBlob);
 
       const record = {
         id: currentPairId || 'PAIR-DISCONNECTED',
-        callerName: currentSessionCaller,
-        partnerName: isHost ? currentSessionPartner : userData.name,
         user: userData.name || 'User',
         lang: userData.lang || 'SANTALI',
         duration: document.getElementById('timer').textContent,
-        durationSeconds: seconds,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        date: new Date().toLocaleDateString(),
         localData: localBase64,
         remoteData: remoteBase64
       };
@@ -808,50 +623,17 @@
 
     function disconnectCall(sendSignal = true) {
       userDisconnectedManual = true;
-
-      if (sendSignal && peerConn && peerConn.open) {
-        try { peerConn.send({ type: 'DISCONNECT' }); } catch(e){}
-      }
-
-      if (isRecording) {
-        executeStopRecording();
-      }
-
-      if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
-      }
-
+      if (sendSignal && peerConn && peerConn.open) { try { peerConn.send({ type: 'DISCONNECT' }); } catch(e){} }
+      if (isRecording) executeStopRecording();
+      if (localStream) localStream.getTracks().forEach(track => track.stop());
       if (peerConn) try { peerConn.close(); } catch(e){}
       if (currentCall) try { currentCall.close(); } catch(e){}
       if (peer) try { peer.destroy(); } catch(e){}
-
-      document.getElementById('rec-status-badge').textContent = "Disconnected";
-      document.getElementById('rec-status-badge').className = "text-xs bg-rose-950 text-rose-400 border border-rose-800 px-2.5 py-1 rounded-full";
-
-      const banner = document.getElementById('waiting-banner');
-      banner.textContent = "❌ Call Disconnected / Session Ended";
-      banner.className = "text-xs text-rose-400 bg-rose-950/40 border border-rose-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
-
-      document.getElementById('receiver-dot').className = "w-2 h-2 rounded-full bg-rose-500";
-      document.getElementById('receiver-rec-indicator').textContent = "Disconnected";
-      document.getElementById('receiver-rec-indicator').className = "text-[10px] text-rose-400 font-mono";
-    }
-
-    function handleUnexpectedDisconnect() {
-      if (isRecording) {
-        executeStopRecording();
-      }
-      document.getElementById('rec-status-badge').textContent = "Signal Lost";
-      document.getElementById('rec-status-badge').className = "text-xs bg-amber-950 text-amber-400 border border-amber-800 px-2.5 py-1 rounded-full";
-
-      const banner = document.getElementById('waiting-banner');
-      banner.textContent = "⚠️ Signal Lost! Saving recorded audio...";
-      banner.className = "text-xs text-amber-400 bg-amber-950/40 border border-amber-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
+      switchPage(2);
     }
 
     function startTimer() {
-      seconds = 0;
-      clearInterval(timerInterval);
+      seconds = 0; clearInterval(timerInterval);
       timerInterval = setInterval(() => {
         seconds++;
         const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
@@ -874,100 +656,22 @@
     function downloadCurrentZip() {
       if (!localAudioBlob) return alert("Audio files missing.");
       const zip = new JSZip();
-      
-      const hostName = isHost ? "Caller" : "Receiver";
-      const remoteName = isHost ? "Receiver" : "Caller";
-
-      zip.file(`${hostName}_Audio_${currentPairId}.wav`, localAudioBlob);
-      if (remoteAudioBlob) {
-        zip.file(`${remoteName}_Audio_${currentPairId}.wav`, remoteAudioBlob);
-      }
-
-      const metadataContent = 
-`==============================================
-          HIRLA DUAL RECORDING DETAILS        
-==============================================
-Pair ID: ${currentPairId}
-Caller Name: ${currentSessionCaller}
-Partner Name: ${isHost ? currentSessionPartner : userData.name}
-Language: ${userData.lang || 'SANTALI'}
-Duration: ${document.getElementById('timer').textContent}
-Recorded Date: ${new Date().toLocaleDateString()}
-Recorded Time: ${new Date().toLocaleTimeString()}
-Company / Platform: HIRLA
-==============================================`;
-
-      zip.file(`Details_${currentPairId}.txt`, metadataContent);
-
-      zip.generateAsync({ type: "blob" }).then(content => {
-        saveAs(content, `${currentPairId}_HIRLA_DualAudio.zip`);
-      });
-    }
-
-    function downloadHistoryZip(index) {
-      const record = callHistory[index];
-      if (!record || !record.localData) return alert("Audio record missing.");
-
-      const zip = new JSZip();
-      const localBlob = dataURItoBlob(record.localData);
-      const remoteBlob = record.remoteData ? dataURItoBlob(record.remoteData) : localBlob;
-
-      zip.file(`Caller_Audio_${record.id}.wav`, localBlob);
-      zip.file(`Receiver_Audio_${record.id}.wav`, remoteBlob);
-
-      const metadataContent = 
-`==============================================
-          HIRLA DUAL RECORDING DETAILS        
-==============================================
-Pair ID: ${record.id}
-Caller Name: ${record.callerName || 'Caller'}
-Partner Name: ${record.partnerName || 'Partner'}
-Language: ${record.lang}
-Duration: ${record.duration}
-Recorded Date: ${record.date || 'N/A'}
-Recorded Time: ${record.time || 'N/A'}
-Company / Platform: HIRLA
-==============================================`;
-
-      zip.file(`Details_${record.id}.txt`, metadataContent);
-
-      zip.generateAsync({ type: "blob" }).then(content => {
-        saveAs(content, `${record.id}_${record.lang}_HIRLA.zip`);
-      });
-    }
-
-    function dataURItoBlob(dataURI) {
-      const byteString = atob(dataURI.split(',')[1]);
-      const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
-      const ab = new ArrayBuffer(byteString.length);
-      const ia = new Uint8Array(ab);
-      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-      return new Blob([ab], { type: mimeString });
+      zip.file(`Caller_Audio_${currentPairId}.wav`, localAudioBlob);
+      if (remoteAudioBlob) zip.file(`Receiver_Audio_${currentPairId}.wav`, remoteAudioBlob);
+      zip.generateAsync({ type: "blob" }).then(content => saveAs(content, `${currentPairId}_DualAudio.zip`));
     }
 
     function saveHistoryData() {
       localStorage.setItem('rec_caller_count', callerCallsCount);
       localStorage.setItem('rec_receiver_count', receiverCallsCount);
-      localStorage.setItem('rec_caller_sec', callerTotalSeconds);
-      localStorage.setItem('rec_receiver_sec', receiverTotalSeconds);
-
-      try {
-        localStorage.setItem('rec_history_list', JSON.stringify(callHistory.slice(0, 10)));
-      } catch(e) {}
+      try { localStorage.setItem('rec_history_list', JSON.stringify(callHistory.slice(0, 10))); } catch(e) {}
     }
 
     function loadSavedData() {
       const prof = localStorage.getItem('rec_user_profile');
       if (prof) userData = JSON.parse(prof);
-
-      const bnk = localStorage.getItem('rec_bank_details');
-      if (bnk) bankData = JSON.parse(bnk);
-
       callerCallsCount = parseInt(localStorage.getItem('rec_caller_count')) || 0;
       receiverCallsCount = parseInt(localStorage.getItem('rec_receiver_count')) || 0;
-      callerTotalSeconds = parseInt(localStorage.getItem('rec_caller_sec')) || 0;
-      receiverTotalSeconds = parseInt(localStorage.getItem('rec_receiver_sec')) || 0;
-
       const hist = localStorage.getItem('rec_history_list');
       if (hist) callHistory = JSON.parse(hist);
     }
@@ -975,51 +679,24 @@ Company / Platform: HIRLA
     function updateHistoryUI() {
       document.getElementById('count-caller').textContent = callerCallsCount;
       document.getElementById('count-receiver').textContent = receiverCallsCount;
-
-      document.getElementById('dur-caller').textContent = formatSecsToMinSec(callerTotalSeconds);
-      document.getElementById('dur-receiver').textContent = formatSecsToMinSec(receiverTotalSeconds);
-
-      // COMBINED TOTALS
-      const totalCallsCombined = callerCallsCount + receiverCallsCount;
-      const totalSecsCombined = callerTotalSeconds + receiverTotalSeconds;
-
-      document.getElementById('count-total-combined').textContent = totalCallsCombined;
-      document.getElementById('dur-total-combined').textContent = formatSecsToMinSec(totalSecsCombined);
-
       const historyList = document.getElementById('history-list');
       if (!callHistory || callHistory.length === 0) {
         historyList.innerHTML = `<p class="text-xs text-slate-500 text-center py-4 bg-slate-900/50 rounded-lg">कोई रिकॉर्डिंग हिस्ट्री मौजूद नहीं है।</p>`;
         return;
       }
-
       historyList.innerHTML = callHistory.map((rec, i) => `
-        <div class="bg-slate-900/90 border border-slate-700/80 p-3 rounded-xl flex items-center justify-between text-xs transition hover:border-slate-600">
-          <div class="space-y-1">
-            <div class="flex items-center gap-2">
-              <span class="font-mono font-bold text-indigo-400">${rec.id}</span>
-              <span class="bg-slate-800 text-amber-300 font-mono text-[10px] px-2 py-0.5 rounded border border-slate-700">${rec.lang}</span>
-            </div>
-            <p class="text-slate-300 text-[11px]">👤 Caller: <span class="text-slate-100 font-medium">${rec.callerName || 'N/A'}</span> | Partner: <span class="text-slate-100 font-medium">${rec.partnerName || 'N/A'}</span></p>
-            <p class="text-slate-400 text-[10px]">⏱️ ${rec.duration} | 🕒 ${rec.time}</p>
+        <div class="bg-slate-900/90 border border-slate-700/80 p-3 rounded-xl flex items-center justify-between text-xs">
+          <div>
+            <span class="font-mono font-bold text-indigo-400">${rec.id}</span>
+            <p class="text-slate-400 text-[11px]">⏱️ ${rec.duration} | 🕒 ${rec.time}</p>
           </div>
-          <button onclick="downloadHistoryZip(${i})" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1">
-            <span>📦</span> ZIP
-          </button>
+          <button onclick="downloadHistoryZip(${i})" class="bg-indigo-600 text-white px-3 py-1.5 rounded-md text-xs">📦 ZIP</button>
         </div>
       `).join('');
     }
 
-    function goToDashboardAndRefresh() {
-      renderDashboard();
-      switchPage(2);
-    }
-
-    function resetProfile() {
-      if (confirm('क्या आप प्रोफाइल रीसेट करना चाहते हैं?')) {
-        localStorage.clear();
-        location.reload();
-      }
-    }
+    function goToDashboardAndRefresh() { renderDashboard(); switchPage(2); }
+    function resetProfile() { if (confirm('क्या आप प्रोफाइल रीसेट करना चाहते हैं?')) { localStorage.clear(); location.reload(); } }
   </script>
 </body>
 </html>
