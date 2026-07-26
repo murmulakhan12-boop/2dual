@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dual-Channel Call & ZIP Recording System</title>
+  <title>Dual-Channel Call & ZIP Recording System - HIRLA</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- JSZip and FileSaver for local ZIP creation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -28,9 +28,12 @@
     
     <!-- PAGE 1: USER REGISTRATION -->
     <div id="page-1" class="space-y-5">
-      <div class="border-b border-slate-700 pb-3">
-        <h2 class="text-2xl font-bold text-indigo-400">👤 User Registration</h2>
-        <p class="text-xs text-slate-400 mt-1">अपनी जानकारी दर्ज करके शुरू करें</p>
+      <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
+        <div>
+          <h2 class="text-2xl font-bold text-indigo-400">👤 User Registration</h2>
+          <p class="text-xs text-slate-400 mt-1">अपनी जानकारी दर्ज करके शुरू करें</p>
+        </div>
+        <span class="text-sm font-extrabold text-amber-400 tracking-wider bg-slate-900 px-3 py-1 rounded-lg border border-slate-700">HIRLA</span>
       </div>
 
       <div class="space-y-4">
@@ -74,11 +77,14 @@
 
     <!-- PAGE 1B: GUEST / RECEIVER JOIN PAGE -->
     <div id="page-guest-join" class="hidden space-y-5">
-      <div class="border-b border-slate-700 pb-3">
-        <h2 class="text-2xl font-bold text-emerald-400">🎙️ Join Recording Session</h2>
-        <p class="text-xs text-slate-300 mt-1">
-          Invited by <span id="guest-caller-name" class="font-semibold text-indigo-300">Caller</span> · Language: <span id="guest-caller-lang" class="font-semibold font-mono text-amber-300">SANTALI</span>
-        </p>
+      <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
+        <div>
+          <h2 class="text-2xl font-bold text-emerald-400">🎙️ Join Recording Session</h2>
+          <p class="text-xs text-slate-300 mt-1">
+            Invited by <span id="guest-caller-name" class="font-semibold text-indigo-300">Caller</span> · Language: <span id="guest-caller-lang" class="font-semibold font-mono text-amber-300">SANTALI</span>
+          </p>
+        </div>
+        <span class="text-xs font-bold text-amber-400 bg-slate-900 px-2.5 py-1 rounded border border-slate-700">HIRLA</span>
       </div>
 
       <div class="space-y-4">
@@ -106,7 +112,10 @@
     <div id="page-2" class="hidden space-y-6">
       <div class="flex justify-between items-start border-b border-slate-700 pb-3">
         <div>
-          <h2 id="dash-user-name" class="text-xl font-bold text-slate-100">User Dashboard</h2>
+          <div class="flex items-center gap-2">
+            <h2 id="dash-user-name" class="text-xl font-bold text-slate-100">User Dashboard</h2>
+            <span class="text-xs font-extrabold text-amber-400 bg-slate-900 px-2 py-0.5 rounded border border-amber-500/40">HIRLA</span>
+          </div>
           <p id="dash-user-info" class="text-xs text-indigo-400 mt-0.5"></p>
         </div>
         <button onclick="resetProfile()" class="text-xs bg-rose-900/40 hover:bg-rose-800/60 text-rose-300 border border-rose-700/60 px-2.5 py-1 rounded-md transition flex items-center gap-1">
@@ -118,17 +127,48 @@
         <span>🤝</span> Invite Partner
       </button>
 
+      <!-- CALL METRICS DISPLAY -->
       <div class="grid grid-cols-2 gap-4">
         <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-center">
           <p class="text-xs text-slate-400">Total Caller Calls</p>
           <p id="count-caller" class="text-2xl font-bold text-indigo-400 mt-1">0</p>
+          <p class="text-[11px] text-slate-400 mt-1">Duration: <span id="dur-caller" class="font-mono text-indigo-300 font-semibold">00m 00s</span></p>
         </div>
         <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-center">
           <p class="text-xs text-slate-400">Total Receiver Calls</p>
           <p id="count-receiver" class="text-2xl font-bold text-cyan-400 mt-1">0</p>
+          <p class="text-[11px] text-slate-400 mt-1">Duration: <span id="dur-receiver" class="font-mono text-cyan-300 font-semibold">00m 00s</span></p>
         </div>
       </div>
 
+      <!-- PASSBOOK & UPI DETAILS SECTION -->
+      <div class="bg-slate-900/80 border border-slate-700 p-4 rounded-xl space-y-3">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
+            <span>💳</span> Bank Passbook & UPI Details
+          </h3>
+          <button onclick="toggleBankEdit()" id="btn-edit-bank" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-slate-600">Edit</button>
+        </div>
+
+        <div id="bank-view" class="text-xs space-y-1 text-slate-300">
+          <p><span class="text-slate-500">Account Holder:</span> <span id="view-acc-holder" class="font-medium">Not added</span></p>
+          <p><span class="text-slate-500">Bank Name:</span> <span id="view-bank-name" class="font-medium">Not added</span></p>
+          <p><span class="text-slate-500">Account No:</span> <span id="view-acc-no" class="font-mono font-medium">Not added</span></p>
+          <p><span class="text-slate-500">IFSC Code:</span> <span id="view-ifsc" class="font-mono font-medium">Not added</span></p>
+          <p><span class="text-slate-500">UPI ID:</span> <span id="view-upi" class="font-mono font-semibold text-emerald-400">Not added</span></p>
+        </div>
+
+        <div id="bank-form" class="hidden space-y-2 text-xs">
+          <input type="text" id="input-acc-holder" placeholder="Account Holder Name" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <input type="text" id="input-bank-name" placeholder="Bank Name (e.g., SBI)" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <input type="text" id="input-acc-no" placeholder="Account Number" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <input type="text" id="input-ifsc" placeholder="IFSC Code" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <input type="text" id="input-upi" placeholder="UPI ID (e.g., user@upi)" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <button onclick="saveBankDetails()" class="w-full bg-amber-600 hover:bg-amber-500 text-slate-900 font-bold py-2 rounded transition">Save Bank Details</button>
+        </div>
+      </div>
+
+      <!-- PREVIOUS RECORDINGS HISTORY -->
       <div class="space-y-3">
         <h3 class="text-sm font-semibold text-slate-300">Previous Recording Data / History</h3>
         <div id="history-list" class="space-y-2 max-h-56 overflow-y-auto pr-1">
@@ -261,7 +301,7 @@
           </div>
 
           <div class="flex items-center justify-between bg-slate-800 p-2.5 rounded border border-slate-700">
-            <span class="text-xs text-amber-300 font-medium">3. ZIP Package (Dual Clean Audio)</span>
+            <span class="text-xs text-amber-300 font-medium">3. ZIP Package (Dual Audio + Metadata)</span>
             <button onclick="downloadCurrentZip()" class="text-xs bg-amber-600 hover:bg-amber-500 px-3 py-1.5 rounded font-medium">📦 Download ZIP</button>
           </div>
         </div>
@@ -276,6 +316,7 @@
 
   <script>
     let userData = {};
+    let bankData = {};
     let currentPairId = '';
     let isHost = true;
     let peer = null;
@@ -297,9 +338,13 @@
 
     let callerCallsCount = 0;
     let receiverCallsCount = 0;
+    let callerTotalSeconds = 0;
+    let receiverTotalSeconds = 0;
+    let currentSessionPartner = 'Unknown Partner';
+    let currentSessionCaller = 'Unknown Caller';
+
     let callHistory = [];
 
-    // 🔥 OPTIMIZED TURN/STUN CONFIGURATION FOR INTER-NETWORK MOBILE DATA (JIO - AIRTEL)
     const peerOptions = {
       debug: 1,
       config: {
@@ -338,6 +383,7 @@
       if (pairFromUrl) {
         isHost = false;
         currentPairId = pairFromUrl;
+        currentSessionCaller = callerFromUrl || 'Caller';
         
         if (userData && userData.name) {
           startDirectGuestJoin(pairFromUrl, callerFromUrl, langFromUrl);
@@ -378,7 +424,58 @@
     function renderDashboard() {
       document.getElementById('dash-user-name').textContent = `Welcome, ${userData.name}`;
       document.getElementById('dash-user-info').textContent = `Gender: ${userData.gender} | Language: ${userData.lang}`;
+      renderBankUI();
       updateHistoryUI();
+    }
+
+    function toggleBankEdit() {
+      const form = document.getElementById('bank-form');
+      const view = document.getElementById('bank-view');
+      const btn = document.getElementById('btn-edit-bank');
+      if (form.classList.contains('hidden')) {
+        form.classList.remove('hidden');
+        view.classList.add('hidden');
+        btn.textContent = 'Cancel';
+      } else {
+        form.classList.add('hidden');
+        view.classList.remove('hidden');
+        btn.textContent = 'Edit';
+      }
+    }
+
+    function saveBankDetails() {
+      bankData = {
+        accHolder: document.getElementById('input-acc-holder').value.trim(),
+        bankName: document.getElementById('input-bank-name').value.trim(),
+        accNo: document.getElementById('input-acc-no').value.trim(),
+        ifsc: document.getElementById('input-ifsc').value.trim(),
+        upi: document.getElementById('input-upi').value.trim()
+      };
+      localStorage.setItem('rec_bank_details', JSON.stringify(bankData));
+      renderBankUI();
+      toggleBankEdit();
+    }
+
+    function renderBankUI() {
+      if (bankData && bankData.accHolder) {
+        document.getElementById('view-acc-holder').textContent = bankData.accHolder || 'Not added';
+        document.getElementById('view-bank-name').textContent = bankData.bankName || 'Not added';
+        document.getElementById('view-acc-no').textContent = bankData.accNo || 'Not added';
+        document.getElementById('view-ifsc').textContent = bankData.ifsc || 'Not added';
+        document.getElementById('view-upi').textContent = bankData.upi || 'Not added';
+
+        document.getElementById('input-acc-holder').value = bankData.accHolder || '';
+        document.getElementById('input-bank-name').value = bankData.bankName || '';
+        document.getElementById('input-acc-no').value = bankData.accNo || '';
+        document.getElementById('input-ifsc').value = bankData.ifsc || '';
+        document.getElementById('input-upi').value = bankData.upi || '';
+      }
+    }
+
+    function formatSecsToMinSec(totalSeconds) {
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = totalSeconds % 60;
+      return `${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
     }
 
     function generateMeetingLink() {
@@ -398,6 +495,8 @@
       historySaved = false;
       userDisconnectedManual = false;
       connectRetryCount = 0;
+      currentSessionCaller = userData.name;
+      currentSessionPartner = 'Waiting...';
       switchPage(5);
 
       document.getElementById('room-caller-name').textContent = `${userData.name} (You)`;
@@ -419,6 +518,9 @@
       historySaved = false;
       userDisconnectedManual = false;
       connectRetryCount = 0;
+      currentSessionCaller = callerName || 'Caller';
+      currentSessionPartner = userData.name;
+
       switchPage(5);
 
       document.getElementById('room-caller-name').textContent = callerName || 'Caller';
@@ -436,7 +538,6 @@
       initializePeer(null, pairId);
     }
 
-    // 🔧 ROBUST HANDSHAKE FOR CROSS-NETWORK MOBILE DATA
     function initializePeer(customId = null, targetPairId = null) {
       if (peer) { try { peer.destroy(); } catch(e){} }
 
@@ -521,7 +622,10 @@
 
       peerConn.on('data', (data) => {
         if (data.type === 'JOINED') {
-          if (isHost) document.getElementById('room-receiver-name').textContent = data.name;
+          if (isHost) {
+            currentSessionPartner = data.name;
+            document.getElementById('room-receiver-name').textContent = data.name;
+          }
           markConnectedState();
         } else if (data.type === 'START_REC') {
           executeStartRecording();
@@ -652,18 +756,27 @@
       document.getElementById('dl-remote').href = URL.createObjectURL(remoteAudioBlob);
       document.getElementById('download-section').classList.remove('hidden');
 
-      if (isHost) callerCallsCount++;
-      else receiverCallsCount++;
+      if (isHost) {
+        callerCallsCount++;
+        callerTotalSeconds += seconds;
+      } else {
+        receiverCallsCount++;
+        receiverTotalSeconds += seconds;
+      }
 
       const localBase64 = await blobToBase64(localAudioBlob);
       const remoteBase64 = await blobToBase64(remoteAudioBlob);
 
       const record = {
         id: currentPairId || 'PAIR-DISCONNECTED',
+        callerName: currentSessionCaller,
+        partnerName: isHost ? currentSessionPartner : userData.name,
         user: userData.name || 'User',
         lang: userData.lang || 'SANTALI',
         duration: document.getElementById('timer').textContent,
+        durationSeconds: seconds,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date: new Date().toLocaleDateString(),
         localData: localBase64,
         remoteData: remoteBase64
       };
@@ -750,8 +863,25 @@
         zip.file(`${remoteName}_Audio_${currentPairId}.wav`, remoteAudioBlob);
       }
 
+      // METADATA TXT FILE INSIDE ZIP
+      const metadataContent = 
+`==============================================
+          HIRLA DUAL RECORDING DETAILS        
+==============================================
+Pair ID: ${currentPairId}
+Caller Name: ${currentSessionCaller}
+Partner Name: ${isHost ? currentSessionPartner : userData.name}
+Language: ${userData.lang || 'SANTALI'}
+Duration: ${document.getElementById('timer').textContent}
+Recorded Date: ${new Date().toLocaleDateString()}
+Recorded Time: ${new Date().toLocaleTimeString()}
+Company / Platform: HIRLA
+==============================================`;
+
+      zip.file(`Details_${currentPairId}.txt`, metadataContent);
+
       zip.generateAsync({ type: "blob" }).then(content => {
-        saveAs(content, `${currentPairId}_DualAudio.zip`);
+        saveAs(content, `${currentPairId}_HIRLA_DualAudio.zip`);
       });
     }
 
@@ -766,8 +896,24 @@
       zip.file(`Caller_Audio_${record.id}.wav`, localBlob);
       zip.file(`Receiver_Audio_${record.id}.wav`, remoteBlob);
 
+      const metadataContent = 
+`==============================================
+          HIRLA DUAL RECORDING DETAILS        
+==============================================
+Pair ID: ${record.id}
+Caller Name: ${record.callerName || 'Caller'}
+Partner Name: ${record.partnerName || 'Partner'}
+Language: ${record.lang}
+Duration: ${record.duration}
+Recorded Date: ${record.date || 'N/A'}
+Recorded Time: ${record.time || 'N/A'}
+Company / Platform: HIRLA
+==============================================`;
+
+      zip.file(`Details_${record.id}.txt`, metadataContent);
+
       zip.generateAsync({ type: "blob" }).then(content => {
-        saveAs(content, `${record.id}_${record.lang}_DualAudio.zip`);
+        saveAs(content, `${record.id}_${record.lang}_HIRLA.zip`);
       });
     }
 
@@ -783,6 +929,9 @@
     function saveHistoryData() {
       localStorage.setItem('rec_caller_count', callerCallsCount);
       localStorage.setItem('rec_receiver_count', receiverCallsCount);
+      localStorage.setItem('rec_caller_sec', callerTotalSeconds);
+      localStorage.setItem('rec_receiver_sec', receiverTotalSeconds);
+
       try {
         localStorage.setItem('rec_history_list', JSON.stringify(callHistory.slice(0, 10)));
       } catch(e) {}
@@ -792,8 +941,13 @@
       const prof = localStorage.getItem('rec_user_profile');
       if (prof) userData = JSON.parse(prof);
 
+      const bnk = localStorage.getItem('rec_bank_details');
+      if (bnk) bankData = JSON.parse(bnk);
+
       callerCallsCount = parseInt(localStorage.getItem('rec_caller_count')) || 0;
       receiverCallsCount = parseInt(localStorage.getItem('rec_receiver_count')) || 0;
+      callerTotalSeconds = parseInt(localStorage.getItem('rec_caller_sec')) || 0;
+      receiverTotalSeconds = parseInt(localStorage.getItem('rec_receiver_sec')) || 0;
 
       const hist = localStorage.getItem('rec_history_list');
       if (hist) callHistory = JSON.parse(hist);
@@ -802,6 +956,9 @@
     function updateHistoryUI() {
       document.getElementById('count-caller').textContent = callerCallsCount;
       document.getElementById('count-receiver').textContent = receiverCallsCount;
+
+      document.getElementById('dur-caller').textContent = formatSecsToMinSec(callerTotalSeconds);
+      document.getElementById('dur-receiver').textContent = formatSecsToMinSec(receiverTotalSeconds);
 
       const historyList = document.getElementById('history-list');
       if (!callHistory || callHistory.length === 0) {
@@ -816,7 +973,8 @@
               <span class="font-mono font-bold text-indigo-400">${rec.id}</span>
               <span class="bg-slate-800 text-amber-300 font-mono text-[10px] px-2 py-0.5 rounded border border-slate-700">${rec.lang}</span>
             </div>
-            <p class="text-slate-400 text-[11px]">⏱️ ${rec.duration} | 🕒 ${rec.time}</p>
+            <p class="text-slate-300 text-[11px]">👤 Caller: <span class="text-slate-100 font-medium">${rec.callerName || 'N/A'}</span> | Partner: <span class="text-slate-100 font-medium">${rec.partnerName || 'N/A'}</span></p>
+            <p class="text-slate-400 text-[10px]">⏱️ ${rec.duration} | 🕒 ${rec.time}</p>
           </div>
           <button onclick="downloadHistoryZip(${i})" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1">
             <span>📦</span> ZIP
