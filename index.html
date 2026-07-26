@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dual-Channel Call & ZIP Recording System - HIRLA</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- JSZip and FileSaver for local ZIP creation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-  <!-- PeerJS for WebRTC Audio Streaming -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
     .pulse-red { animation: pulse 1.2s infinite; }
@@ -21,7 +19,6 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
 
-  <!-- Remote Audio Playback Element -->
   <audio id="remoteAudio" autoplay playsinline class="hidden"></audio>
 
   <div class="w-full max-w-xl bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 relative overflow-hidden">
@@ -70,7 +67,7 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-300 mb-1">UPI ID (For Payments) / पेमेंट के लिए UPI ID</label>
+          <label class="block text-sm font-medium text-slate-300 mb-1">UPI ID (For Payments)</label>
           <input type="text" id="reg-upi" placeholder="e.g. username@upi" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
         </div>
 
@@ -80,7 +77,7 @@
       </div>
     </div>
 
-    <!-- PAGE 1B: GUEST / RECEIVER JOIN PAGE -->
+    <!-- PAGE 1B: GUEST JOIN -->
     <div id="page-guest-join" class="hidden space-y-5">
       <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
         <div>
@@ -119,7 +116,7 @@
     </div>
 
     <!-- PAGE 2: MAIN DASHBOARD -->
-    <div id="page-2" class="hidden space-y-6">
+    <div id="page-2" class="hidden space-y-5">
       <div class="flex justify-between items-start border-b border-slate-700 pb-3">
         <div>
           <h2 id="dash-user-name" class="text-xl font-bold text-slate-100">User Dashboard</h2>
@@ -130,24 +127,40 @@
         </button>
       </div>
 
+      <!-- PAYMENT STATUS CARDS (USER SPECIFIC) -->
+      <div class="grid grid-cols-3 gap-2 text-center bg-slate-900 p-3 rounded-xl border border-slate-700">
+        <div>
+          <p class="text-[10px] text-slate-400 uppercase font-semibold">Total Earned</p>
+          <p id="dash-total-earned" class="text-base font-bold text-emerald-400 mt-0.5">₹ 0.00</p>
+        </div>
+        <div class="border-x border-slate-800">
+          <p class="text-[10px] text-slate-400 uppercase font-semibold">Paid Amount</p>
+          <p id="dash-paid-amount" class="text-base font-bold text-cyan-400 mt-0.5">₹ 0.00</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 uppercase font-semibold">Pending Pay</p>
+          <p id="dash-pending-amount" class="text-base font-bold text-amber-400 mt-0.5">₹ 0.00</p>
+        </div>
+      </div>
+
       <button onclick="switchPage(3)" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2 shadow-lg">
         <span>🤝</span> Invite Partner
       </button>
 
-      <div class="grid grid-cols-2 gap-4">
-        <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-center">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-center">
           <p class="text-xs text-slate-400">Total Caller Calls</p>
-          <p id="count-caller" class="text-2xl font-bold text-indigo-400 mt-1">0</p>
+          <p id="count-caller" class="text-xl font-bold text-indigo-400 mt-0.5">0</p>
         </div>
-        <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-center">
+        <div class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-center">
           <p class="text-xs text-slate-400">Total Receiver Calls</p>
-          <p id="count-receiver" class="text-2xl font-bold text-cyan-400 mt-1">0</p>
+          <p id="count-receiver" class="text-xl font-bold text-cyan-400 mt-0.5">0</p>
         </div>
       </div>
 
       <div class="space-y-3">
         <h3 class="text-sm font-semibold text-slate-300">Previous Recording Data / History</h3>
-        <div id="history-list" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+        <div id="history-list" class="space-y-2 max-h-52 overflow-y-auto pr-1">
           <p class="text-xs text-slate-500 text-center py-4 bg-slate-900/50 rounded-lg">कोई रिकॉर्डिंग हिस्ट्री मौजूद नहीं है।</p>
         </div>
       </div>
@@ -210,7 +223,6 @@
         <span id="rec-status-badge" class="text-xs bg-amber-900/60 text-amber-300 border border-amber-700 px-2.5 py-1 rounded-full">Connecting...</span>
       </div>
 
-      <!-- PARTICIPANTS DISPLAY CARDS -->
       <div class="grid grid-cols-2 gap-3">
         <div id="box-caller" class="bg-slate-900/90 border border-indigo-500/50 p-3 rounded-xl space-y-1">
           <div class="flex items-center justify-between">
@@ -231,7 +243,6 @@
         </div>
       </div>
 
-      <!-- Timer Banner -->
       <div class="text-center bg-slate-900 border border-slate-700 py-4 rounded-xl space-y-2">
         <p id="timer" class="text-4xl font-mono font-bold text-slate-100">00:00:00</p>
         <p id="waiting-banner" class="text-xs text-amber-400 bg-amber-950/40 border border-amber-800/60 py-1.5 px-4 rounded-full font-medium inline-block">
@@ -245,7 +256,6 @@
         </p>
       </div>
 
-      <!-- Controls -->
       <div class="space-y-2">
         <div id="host-controls" class="flex gap-3">
           <button id="btn-start-rec" onclick="startDualRecording()" disabled class="flex-1 bg-emerald-600 opacity-50 cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg">
@@ -261,23 +271,22 @@
         </button>
       </div>
 
-      <!-- Downloads Output -->
       <div id="download-section" class="hidden bg-slate-900 border border-slate-700 p-4 rounded-xl space-y-3">
         <h3 class="text-sm font-semibold text-emerald-400 border-b border-slate-800 pb-1">✅ Audio Output Files Ready</h3>
 
         <div class="space-y-2">
           <div class="flex items-center justify-between bg-slate-800 p-2.5 rounded border border-slate-700">
-            <span class="text-xs text-indigo-300 font-medium">1. Local Voice Stream (Clean)</span>
+            <span class="text-xs text-indigo-300 font-medium">1. Local Voice Stream</span>
             <a id="dl-local" download="Local_Audio.wav" class="text-xs bg-indigo-600 hover:bg-indigo-500 px-3 py-1.5 rounded font-medium">Download</a>
           </div>
 
           <div class="flex items-center justify-between bg-slate-800 p-2.5 rounded border border-slate-700">
-            <span class="text-xs text-cyan-300 font-medium">2. Remote Voice Stream (Clean)</span>
+            <span class="text-xs text-cyan-300 font-medium">2. Remote Voice Stream</span>
             <a id="dl-remote" download="Remote_Audio.wav" class="text-xs bg-cyan-600 hover:bg-cyan-500 px-3 py-1.5 rounded font-medium">Download</a>
           </div>
 
           <div class="flex items-center justify-between bg-slate-800 p-2.5 rounded border border-slate-700">
-            <span class="text-xs text-amber-300 font-medium">3. ZIP Package (Dual Clean Audio)</span>
+            <span class="text-xs text-amber-300 font-medium">3. ZIP Package</span>
             <button onclick="downloadCurrentZip()" class="text-xs bg-amber-600 hover:bg-amber-500 px-3 py-1.5 rounded font-medium">📦 Download ZIP</button>
           </div>
         </div>
@@ -291,8 +300,8 @@
   </div>
 
   <script>
-    // 🔗 आपका GOOGLE WEB APP URL लिंक यहाँ जोड़ दिया गया है
-    const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxqVlOSaS31M3VZHkSEQHbZkkT7-wLVukcBibMFuKVteSKPDv2FKdFPTn8IHGZOIALv0w/exec";
+    // 💡 Update Here: New Web App Script Exec URL Assigned Below
+    const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbztDPCPSq__fmTgOkkg11lgdNij5RVwDGN5xW9Xn5N_wU_P5j2T8Ssrun1hCSayTveP1Q/exec";
 
     let userData = {};
     let currentPairId = '';
@@ -309,7 +318,6 @@
     let isRecording = false;
     let historySaved = false;
     let userDisconnectedManual = false;
-    let connectRetryCount = 0;
     
     let timerInterval;
     let seconds = 0;
@@ -317,6 +325,7 @@
     let callerCallsCount = 0;
     let receiverCallsCount = 0;
     let callHistory = [];
+    let totalPaidByUser = 0;
 
     const peerOptions = {
       debug: 1,
@@ -390,6 +399,19 @@
     function renderDashboard() {
       document.getElementById('dash-user-name').textContent = `Welcome, ${userData.name}`;
       document.getElementById('dash-user-info').textContent = `Gender: ${userData.gender} | Language: ${userData.lang} | UPI: ${userData.upi || 'N/A'}`;
+      
+      let totalEarned = 0;
+      callHistory.forEach(item => {
+        totalEarned += Number(item.numericEarned || 0);
+      });
+
+      let pending = totalEarned - totalPaidByUser;
+      if (pending < 0) pending = 0;
+
+      document.getElementById('dash-total-earned').textContent = `₹ ${totalEarned.toFixed(2)}`;
+      document.getElementById('dash-paid-amount').textContent = `₹ ${totalPaidByUser.toFixed(2)}`;
+      document.getElementById('dash-pending-amount').textContent = `₹ ${pending.toFixed(2)}`;
+
       updateHistoryUI();
     }
 
@@ -406,7 +428,7 @@
     }
 
     async function enterRecordingRoom() {
-      isHost = true; historySaved = false; userDisconnectedManual = false; connectRetryCount = 0; switchPage(5);
+      isHost = true; historySaved = false; userDisconnectedManual = false; switchPage(5);
 
       document.getElementById('room-caller-name').textContent = `${userData.name} (You)`;
       document.getElementById('room-receiver-name').textContent = `Waiting for partner...`;
@@ -418,7 +440,7 @@
     }
 
     async function startDirectGuestJoin(pairId, callerName, langName) {
-      historySaved = false; userDisconnectedManual = false; connectRetryCount = 0; switchPage(5);
+      historySaved = false; userDisconnectedManual = false; switchPage(5);
 
       document.getElementById('room-caller-name').textContent = callerName || 'Caller';
       document.getElementById('room-receiver-name').textContent = `${userData.name} (You)`;
@@ -553,7 +575,7 @@
 
       setTimeout(async () => {
         saveRecordedDataToHistory();
-        sendDataToGoogleSheet(); // 👈 कॉल ख़त्म होने पर डेटा सीधे गूगल शीट में जाएगा
+        sendDataToGoogleSheet();
       }, 500);
 
       document.getElementById('rec-status-badge').textContent = "Stopped";
@@ -567,7 +589,6 @@
       }
     }
 
-    // 📊 GOOGLE SHEET में वर्क एंड पेमेंट डेटा भेजने का फ़ंक्शन
     function sendDataToGoogleSheet() {
       if (!GOOGLE_SHEET_URL) return;
 
@@ -603,6 +624,14 @@
 
       if (isHost) callerCallsCount++; else receiverCallsCount++;
 
+      let numericAmt = 0;
+      let estEarnings = "₹ 0 (Min 10m required)";
+      if (seconds >= 600) {
+        numericAmt = (seconds / 3600) * 100;
+        numericAmt = Math.round(numericAmt * 100) / 100;
+        estEarnings = "₹ " + numericAmt.toFixed(2);
+      }
+
       const localBase64 = await blobToBase64(localAudioBlob);
       const remoteBase64 = await blobToBase64(remoteAudioBlob);
 
@@ -612,13 +641,15 @@
         lang: userData.lang || 'SANTALI',
         duration: document.getElementById('timer').textContent,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        earnings: estEarnings,
+        numericEarned: numericAmt,
         localData: localBase64,
         remoteData: remoteBase64
       };
 
       callHistory.unshift(record);
       saveHistoryData();
-      updateHistoryUI();
+      renderDashboard();
     }
 
     function disconnectCall(sendSignal = true) {
@@ -664,6 +695,7 @@
     function saveHistoryData() {
       localStorage.setItem('rec_caller_count', callerCallsCount);
       localStorage.setItem('rec_receiver_count', receiverCallsCount);
+      localStorage.setItem('rec_paid_by_user', totalPaidByUser);
       try { localStorage.setItem('rec_history_list', JSON.stringify(callHistory.slice(0, 10))); } catch(e) {}
     }
 
@@ -672,6 +704,7 @@
       if (prof) userData = JSON.parse(prof);
       callerCallsCount = parseInt(localStorage.getItem('rec_caller_count')) || 0;
       receiverCallsCount = parseInt(localStorage.getItem('rec_receiver_count')) || 0;
+      totalPaidByUser = parseFloat(localStorage.getItem('rec_paid_by_user')) || 0;
       const hist = localStorage.getItem('rec_history_list');
       if (hist) callHistory = JSON.parse(hist);
     }
@@ -688,7 +721,8 @@
         <div class="bg-slate-900/90 border border-slate-700/80 p-3 rounded-xl flex items-center justify-between text-xs">
           <div>
             <span class="font-mono font-bold text-indigo-400">${rec.id}</span>
-            <p class="text-slate-400 text-[11px]">⏱️ ${rec.duration} | 🕒 ${rec.time}</p>
+            <p class="text-slate-400 text-[11px]">⏱️ Duration: ${rec.duration} | 🕒 ${rec.time}</p>
+            <p class="text-emerald-400 font-medium text-[11px] mt-0.5">💰 Earned: ${rec.earnings || '₹ 0'}</p>
           </div>
           <button onclick="downloadHistoryZip(${i})" class="bg-indigo-600 text-white px-3 py-1.5 rounded-md text-xs">📦 ZIP</button>
         </div>
