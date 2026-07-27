@@ -332,6 +332,9 @@
   </div>
 
   <script>
+    // 🚀 Google Apps Script Web App URL ADDED BELOW
+    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzflH084RcaRci1QDUkHMDnNhMduwV9x-hUr93q-nrYWslUOrdW4FQ8CsKpGtiClnl1uw/exec";
+
     let userData = {};
     let bankData = {};
     let currentPairId = '';
@@ -804,6 +807,44 @@
       callHistory.unshift(record);
       saveHistoryData();
       updateHistoryUI();
+
+      // 🚀 Send Data To Google Sheet
+      sendDataToGoogleSheet(record);
+    }
+
+    // Google Sheet API Call
+    function sendDataToGoogleSheet(record) {
+      if (!GOOGLE_SHEET_WEB_APP_URL) {
+        console.warn("Google Sheet Web App URL missing.");
+        return;
+      }
+
+      const sheetPayload = {
+        pairId: record.id,
+        userName: userData.name || '',
+        role: isHost ? 'Caller' : 'Receiver',
+        callerName: record.callerName || '',
+        partnerName: record.partnerName || '',
+        lang: record.lang || '',
+        duration: record.duration || '00:00:00',
+        durationSeconds: record.durationSeconds || 0,
+        durationMinutes: (record.durationSeconds / 60).toFixed(2), // Minutes calculation
+        date: record.date || '',
+        time: record.time || '',
+        upi: bankData ? bankData.upi : '',
+        accHolder: bankData ? bankData.accHolder : '',
+        accNo: bankData ? bankData.accNo : '',
+        ifsc: bankData ? bankData.ifsc : ''
+      };
+
+      fetch(GOOGLE_SHEET_WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sheetPayload)
+      })
+      .then(() => console.log("Successfully sent call metrics to Google Sheet"))
+      .catch(err => console.error("Error sending to Google Sheet:", err));
     }
 
     function disconnectCall(sendSignal = true) {
