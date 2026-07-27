@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dual-Channel Call & ZIP Recording System - HIRLA</title>
+  <title>Dual-Channel Call & Drive Upload System - HIRLA</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- JSZip and FileSaver for local ZIP creation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -331,8 +331,8 @@
   </div>
 
   <script>
-    // 🔗 UPDATED GOOGLE SHEET WEB APP URL
-    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx3CJSw_IUbfos990c5s_unfLRnjJ94oZagE_s3t6cMllRQ-SngUNhDjkreIV1sRTKTWg/exec";
+    // 🔗 UPDATED NEW GOOGLE SHEET WEB APP URL
+    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby0hce16giNRoUlkqknHgGy7ZnJy4kLrPfhZ9DmD4y4kR5Obx1JPg50v5FLcIJIYZhdgQ/exec";
 
     let userData = {};
     let bankData = {};
@@ -750,7 +750,7 @@
       document.getElementById('receiver-rec-indicator').className = "text-[10px] text-slate-400 font-mono";
 
       const banner = document.getElementById('waiting-banner');
-      banner.textContent = "⏹️ Dual Recording Completed & Saved";
+      banner.textContent = "⏹️ Dual Recording Completed & Uploading...";
       banner.className = "text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
 
       if (isHost) {
@@ -812,6 +812,11 @@
 
       const formattedDuration = formatSecsToMinSec(record.durationSeconds || 0);
 
+      const banner = document.getElementById('waiting-banner');
+      if (banner) {
+        banner.textContent = "⏳ Admin (Google Drive) को ऑडियो भेजा जा रहा है...";
+      }
+
       const sheetPayload = {
         pairId: record.id || '',
         userName: userData.name || '',
@@ -821,7 +826,8 @@
         durationFormatted: formattedDuration,
         date: record.date || '',
         time: record.time || '',
-        audioFileStatus: 'Audio Saved in ZIP Package (Local + Remote)',
+        localAudioBase64: record.localData || '',
+        remoteAudioBase64: record.remoteData || '',
         accHolder: bankData ? (bankData.accHolder || '') : '',
         bankName: bankData ? (bankData.bankName || '') : '',
         branch: bankData ? (bankData.branch || '') : '',
@@ -836,7 +842,12 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(sheetPayload)
       })
-      .then(() => console.log("Successfully sent data to Google Sheet"))
+      .then(() => {
+        console.log("Successfully sent audio & details to Google Drive & Sheet");
+        if (banner) {
+          banner.textContent = "✅ ऑडियो सफ़लतापूर्वक Admin (Google Sheet) तक पहुँच गया!";
+        }
+      })
       .catch(err => console.error("Error sending to Google Sheet:", err));
     }
 
