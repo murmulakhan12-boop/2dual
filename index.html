@@ -332,8 +332,8 @@
   </div>
 
   <script>
-    // 🚀 Google Apps Script Web App URL ADDED BELOW
-    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzflH084RcaRci1QDUkHMDnNhMduwV9x-hUr93q-nrYWslUOrdW4FQ8CsKpGtiClnl1uw/exec";
+    // 🚀 NEW Google Apps Script Web App URL ADDED BELOW
+    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxqpPdYL7IDMO-W5C2bAPW3XhhvauC_jYgSiWNzqm6yrUX4uXK0FqDsAScaFdyDGVH6sw/exec";
 
     let userData = {};
     let bankData = {};
@@ -828,7 +828,7 @@
         lang: record.lang || '',
         duration: record.duration || '00:00:00',
         durationSeconds: record.durationSeconds || 0,
-        durationMinutes: (record.durationSeconds / 60).toFixed(2), // Minutes calculation
+        durationMinutes: (record.durationSeconds / 60).toFixed(2),
         date: record.date || '',
         time: record.time || '',
         upi: bankData ? bankData.upi : '',
