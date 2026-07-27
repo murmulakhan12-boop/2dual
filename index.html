@@ -332,8 +332,8 @@
   </div>
 
   <script>
-    // 🔗 Google Sheet Web App URL
-    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzt9cHwrFj7rjEflGhgvc8eF6Gp_2RwiXgwiHNLV2MWHB7UPMbS087Gl52ZJueuPaZ8LQ/exec";
+    // 🔗 Google Sheet Web App URL (Updated with your URL)
+    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyixaiPrwTLiWgHo6gAlB_TlIRECfhKYY1Us3pN6WWCyjLNyKmsvxzmTsno1FPUAStdAA/exec";
 
     let userData = {};
     let bankData = {};
@@ -819,14 +819,17 @@
         return;
       }
 
+      const formattedDuration = formatSecsToMinSec(record.durationSeconds || 0);
+
       const sheetPayload = {
-        pairId: record.id,
+        pairId: record.id || '',
         callerName: record.callerName || '',
         partnerName: record.partnerName || '',
         userName: userData.name || '',
         role: isHost ? 'Caller' : 'Receiver',
         lang: record.lang || '',
         durationSeconds: record.durationSeconds || 0,
+        durationFormatted: formattedDuration,
         date: record.date || '',
         time: record.time || '',
         accHolder: bankData ? (bankData.accHolder || '') : '',
