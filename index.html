@@ -81,7 +81,7 @@
         <div>
           <h2 class="text-2xl font-bold text-emerald-400">🎙️ Join Recording Session</h2>
           <p class="text-xs text-slate-300 mt-1">
-            Invited by <span id="guest-caller-name" class="font-semibold text-indigo-300">Caller</span> · Language: <span id="guest-caller-lang" class="font-semibold font-mono text-amber-300">SANTALI</span>
+            Language: <span id="guest-caller-lang" class="font-semibold font-mono text-amber-300">SANTALI</span>
           </p>
         </div>
         <span class="text-xs font-bold text-amber-400 bg-slate-900 px-2.5 py-1 rounded border border-slate-700">HIRLA</span>
@@ -258,7 +258,7 @@
             <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Caller (Host)</span>
             <span id="caller-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
           </div>
-          <p id="room-caller-name" class="text-sm font-semibold text-slate-100 truncate">Loading...</p>
+          <p id="room-caller-name" class="text-sm font-semibold text-slate-100 truncate">Connected</p>
           <p id="caller-rec-indicator" class="text-[10px] text-emerald-400 font-mono">🔇 Noise Filter Active</p>
         </div>
 
@@ -332,8 +332,8 @@
   </div>
 
   <script>
-    // 🔗 Google Sheet Web App URL (Updated with your URL)
-    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyixaiPrwTLiWgHo6gAlB_TlIRECfhKYY1Us3pN6WWCyjLNyKmsvxzmTsno1FPUAStdAA/exec";
+    // 🔗 Google Sheet Web App URL (Updated)
+    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw37TpU_Z2GfxWuBEnZB-gsanSzSKmrjesxwMUahKnJlBpfbuGsoxlMy7sF3tIfoHA3Ig/exec";
 
     let userData = {};
     let bankData = {};
@@ -360,8 +360,6 @@
     let receiverCallsCount = 0;
     let callerTotalSeconds = 0;
     let receiverTotalSeconds = 0;
-    let currentSessionPartner = 'Unknown Partner';
-    let currentSessionCaller = 'Unknown Caller';
 
     let callHistory = [];
 
@@ -397,18 +395,15 @@
 
       const urlParams = new URLSearchParams(window.location.search);
       const pairFromUrl = urlParams.get('pair');
-      const callerFromUrl = urlParams.get('caller');
       const langFromUrl = urlParams.get('lang');
 
       if (pairFromUrl) {
         isHost = false;
         currentPairId = pairFromUrl;
-        currentSessionCaller = callerFromUrl || 'Caller';
         
         if (userData && userData.name) {
-          startDirectGuestJoin(pairFromUrl, callerFromUrl, langFromUrl);
+          startDirectGuestJoin(pairFromUrl, langFromUrl);
         } else {
-          document.getElementById('guest-caller-name').textContent = callerFromUrl || 'Caller';
           document.getElementById('guest-caller-lang').textContent = langFromUrl || 'SANTALI';
           switchPage('guest-join');
         }
@@ -508,7 +503,7 @@
     }
 
     function copyInviteLink() {
-      const inviteUrl = `${window.location.origin}${window.location.pathname}?pair=${currentPairId}&lang=${encodeURIComponent(userData.lang)}&caller=${encodeURIComponent(userData.name)}`;
+      const inviteUrl = `${window.location.origin}${window.location.pathname}?pair=${currentPairId}&lang=${encodeURIComponent(userData.lang)}`;
       navigator.clipboard.writeText(inviteUrl);
       alert('Invite Link Copied:\n' + inviteUrl);
     }
@@ -518,11 +513,9 @@
       historySaved = false;
       userDisconnectedManual = false;
       connectRetryCount = 0;
-      currentSessionCaller = userData.name;
-      currentSessionPartner = 'Waiting...';
       switchPage(5);
 
-      document.getElementById('room-caller-name').textContent = `${userData.name} (You)`;
+      document.getElementById('room-caller-name').textContent = isHost ? `${userData.name} (You)` : 'Connected';
       document.getElementById('room-receiver-name').textContent = `Waiting for partner...`;
       document.getElementById('room-session-tag').textContent = `${currentPairId} · ${(userData.lang || 'SANTALI').toUpperCase()}`;
       document.getElementById('host-controls').classList.remove('hidden');
@@ -537,16 +530,14 @@
       initializePeer(currentPairId);
     }
 
-    async function startDirectGuestJoin(pairId, callerName, langName) {
+    async function startDirectGuestJoin(pairId, langName) {
       historySaved = false;
       userDisconnectedManual = false;
       connectRetryCount = 0;
-      currentSessionCaller = callerName || 'Caller';
-      currentSessionPartner = userData.name;
 
       switchPage(5);
 
-      document.getElementById('room-caller-name').textContent = callerName || 'Caller';
+      document.getElementById('room-caller-name').textContent = 'Caller';
       document.getElementById('room-receiver-name').textContent = `${userData.name} (You)`;
       document.getElementById('room-session-tag').textContent = `${pairId} · ${(langName || 'SANTALI').toUpperCase()}`;
       document.getElementById('host-controls').classList.add('hidden');
@@ -597,7 +588,6 @@
       });
 
       peer.on('error', (err) => {
-        console.warn("PeerJS Error Type:", err.type);
         if ((err.type === 'peer-unavailable' || err.type === 'network' || err.type === 'webrtc') && !isHost && connectRetryCount < 5) {
           connectRetryCount++;
           setTimeout(() => retryConnectToHost(targetPairId), 1500);
@@ -633,21 +623,20 @@
       localStorage.setItem('rec_user_profile', JSON.stringify(userData));
 
       const urlParams = new URLSearchParams(window.location.search);
-      startDirectGuestJoin(currentPairId, urlParams.get('caller'), urlParams.get('lang'));
+      startDirectGuestJoin(currentPairId, urlParams.get('lang'));
     }
 
     function setupDataConnection() {
       if (!peerConn) return;
 
       peerConn.on('open', () => {
-        peerConn.send({ type: 'JOINED', name: userData.name });
+        peerConn.send({ type: 'JOINED' });
       });
 
       peerConn.on('data', (data) => {
         if (data.type === 'JOINED') {
           if (isHost) {
-            currentSessionPartner = data.name;
-            document.getElementById('room-receiver-name').textContent = data.name;
+            document.getElementById('room-receiver-name').textContent = 'Connected Partner';
           }
           markConnectedState();
         } else if (data.type === 'START_REC') {
@@ -792,8 +781,6 @@
 
       const record = {
         id: currentPairId || 'PAIR-DISCONNECTED',
-        callerName: currentSessionCaller,
-        partnerName: isHost ? currentSessionPartner : userData.name,
         user: userData.name || 'User',
         lang: userData.lang || 'SANTALI',
         duration: document.getElementById('timer').textContent,
@@ -823,8 +810,6 @@
 
       const sheetPayload = {
         pairId: record.id || '',
-        callerName: record.callerName || '',
-        partnerName: record.partnerName || '',
         userName: userData.name || '',
         role: isHost ? 'Caller' : 'Receiver',
         lang: record.lang || '',
@@ -932,8 +917,8 @@
           HIRLA DUAL RECORDING DETAILS        
 ==============================================
 Pair ID: ${currentPairId}
-Caller Name: ${currentSessionCaller}
-Partner Name: ${isHost ? currentSessionPartner : userData.name}
+User Name: ${userData.name || 'User'}
+Role: ${isHost ? 'Caller' : 'Receiver'}
 Language: ${userData.lang || 'SANTALI'}
 Duration: ${document.getElementById('timer').textContent}
 Recorded Date: ${new Date().toLocaleDateString()}
@@ -956,16 +941,15 @@ Company / Platform: HIRLA
       const localBlob = dataURItoBlob(record.localData);
       const remoteBlob = record.remoteData ? dataURItoBlob(record.remoteData) : localBlob;
 
-      zip.file(`Caller_Audio_${record.id}.wav`, localBlob);
-      zip.file(`Receiver_Audio_${record.id}.wav`, remoteBlob);
+      zip.file(`Local_Audio_${record.id}.wav`, localBlob);
+      zip.file(`Remote_Audio_${record.id}.wav`, remoteBlob);
 
       const metadataContent = 
 `==============================================
           HIRLA DUAL RECORDING DETAILS        
 ==============================================
 Pair ID: ${record.id}
-Caller Name: ${record.callerName || 'Caller'}
-Partner Name: ${record.partnerName || 'Partner'}
+User Name: ${record.user}
 Language: ${record.lang}
 Duration: ${record.duration}
 Recorded Date: ${record.date || 'N/A'}
@@ -1043,7 +1027,7 @@ Company / Platform: HIRLA
               <span class="font-mono font-bold text-indigo-400">${rec.id}</span>
               <span class="bg-slate-800 text-amber-300 font-mono text-[10px] px-2 py-0.5 rounded border border-slate-700">${rec.lang}</span>
             </div>
-            <p class="text-slate-300 text-[11px]">👤 Caller: <span class="text-slate-100 font-medium">${rec.callerName || 'N/A'}</span> | Partner: <span class="text-slate-100 font-medium">${rec.partnerName || 'N/A'}</span></p>
+            <p class="text-slate-300 text-[11px]">👤 User: <span class="text-slate-100 font-medium">${rec.user || 'N/A'}</span></p>
             <p class="text-slate-400 text-[10px]">⏱️ ${rec.duration} | 🕒 ${rec.time}</p>
           </div>
           <button onclick="downloadHistoryZip(${i})" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1">
