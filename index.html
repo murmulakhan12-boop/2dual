@@ -332,7 +332,7 @@
   </div>
 
   <script>
-    // 🔗 Updated Google Sheet Web App URL
+    // 🔗 Google Sheet Web App URL
     const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzt9cHwrFj7rjEflGhgvc8eF6Gp_2RwiXgwiHNLV2MWHB7UPMbS087Gl52ZJueuPaZ8LQ/exec";
 
     let userData = {};
@@ -821,18 +821,20 @@
 
       const sheetPayload = {
         pairId: record.id,
+        callerName: record.callerName || '',
+        partnerName: record.partnerName || '',
         userName: userData.name || '',
         role: isHost ? 'Caller' : 'Receiver',
         lang: record.lang || '',
-        durationMinutes: (record.durationSeconds / 60).toFixed(2),
+        durationSeconds: record.durationSeconds || 0,
         date: record.date || '',
         time: record.time || '',
-        accHolder: bankData ? bankData.accHolder : '',
-        bankName: bankData ? bankData.bankName : '',
-        branch: bankData ? bankData.branch : '',
-        accNo: bankData ? bankData.accNo : '',
-        ifsc: bankData ? bankData.ifsc : '',
-        upi: bankData ? bankData.upi : ''
+        accHolder: bankData ? (bankData.accHolder || '') : '',
+        bankName: bankData ? (bankData.bankName || '') : '',
+        branch: bankData ? (bankData.branch || '') : '',
+        accNo: bankData ? (bankData.accNo || '') : '',
+        ifsc: bankData ? (bankData.ifsc || '') : '',
+        upi: bankData ? (bankData.upi || '') : ''
       };
 
       fetch(GOOGLE_SHEET_WEB_APP_URL, {
