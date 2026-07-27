@@ -332,8 +332,8 @@
   </div>
 
   <script>
-    // 🚀 NEW Google Apps Script Web App URL ADDED BELOW
-    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxqpPdYL7IDMO-W5C2bAPW3XhhvauC_jYgSiWNzqm6yrUX4uXK0FqDsAScaFdyDGVH6sw/exec";
+    // 🔗 Updated Google Sheet Web App URL
+    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzt9cHwrFj7rjEflGhgvc8eF6Gp_2RwiXgwiHNLV2MWHB7UPMbS087Gl52ZJueuPaZ8LQ/exec";
 
     let userData = {};
     let bankData = {};
@@ -823,18 +823,16 @@
         pairId: record.id,
         userName: userData.name || '',
         role: isHost ? 'Caller' : 'Receiver',
-        callerName: record.callerName || '',
-        partnerName: record.partnerName || '',
         lang: record.lang || '',
-        duration: record.duration || '00:00:00',
-        durationSeconds: record.durationSeconds || 0,
         durationMinutes: (record.durationSeconds / 60).toFixed(2),
         date: record.date || '',
         time: record.time || '',
-        upi: bankData ? bankData.upi : '',
         accHolder: bankData ? bankData.accHolder : '',
+        bankName: bankData ? bankData.bankName : '',
+        branch: bankData ? bankData.branch : '',
         accNo: bankData ? bankData.accNo : '',
-        ifsc: bankData ? bankData.ifsc : ''
+        ifsc: bankData ? bankData.ifsc : '',
+        upi: bankData ? bankData.upi : ''
       };
 
       fetch(GOOGLE_SHEET_WEB_APP_URL, {
