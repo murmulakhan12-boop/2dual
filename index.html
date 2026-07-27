@@ -142,7 +142,6 @@
           </div>
         </div>
 
-        <!-- TOTAL COMBINED CALLS & MINUTES -->
         <div class="bg-slate-900/90 border border-emerald-500/40 p-3.5 rounded-xl flex items-center justify-between text-center">
           <div>
             <p class="text-[11px] text-slate-400 uppercase tracking-wider">Total Calls Made</p>
@@ -177,7 +176,7 @@
         <div id="bank-form" class="hidden space-y-2 text-xs">
           <input type="text" id="input-acc-holder" placeholder="Account Holder Name" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
           <input type="text" id="input-bank-name" placeholder="Bank Name (e.g., SBI)" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
-          <input type="text" id="input-bank-branch" placeholder="Branch Name (e.g., Main Branch Ranchi)" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <input type="text" id="input-bank-branch" placeholder="Branch Name" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
           <input type="text" id="input-acc-no" placeholder="Account Number" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
           <input type="text" id="input-ifsc" placeholder="IFSC Code" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
           <input type="text" id="input-upi" placeholder="UPI ID (e.g., user@upi)" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
@@ -332,8 +331,8 @@
   </div>
 
   <script>
-    // 🔗 Google Sheet Web App URL (Updated)
-    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx7uUKPIWHoFIX_T2a_A0mjORoM4JQWFCg4ikpYIWAFM3cnKpjaPIwbKH60uLvb7jTUKQ/exec";
+    // 🔗 UPDATED GOOGLE SHEET WEB APP URL
+    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx3CJSw_IUbfos990c5s_unfLRnjJ94oZagE_s3t6cMllRQ-SngUNhDjkreIV1sRTKTWg/exec";
 
     let userData = {};
     let bankData = {};
@@ -398,7 +397,7 @@
       const langFromUrl = urlParams.get('lang');
 
       if (pairFromUrl) {
-        isHost = false;
+        isHost = false; 
         currentPairId = pairFromUrl;
         
         if (userData && userData.name) {
@@ -531,6 +530,7 @@
     }
 
     async function startDirectGuestJoin(pairId, langName) {
+      isHost = false; 
       historySaved = false;
       userDisconnectedManual = false;
       connectRetryCount = 0;
@@ -618,12 +618,17 @@
       const gender = document.getElementById('guest-gender').value;
       if (!name) return alert('अपना नाम दर्ज करें');
       
-      userData.name = name;
-      userData.gender = gender;
+      const urlParams = new URLSearchParams(window.location.search);
+      const langFromUrl = urlParams.get('lang') || 'SANTALI';
+
+      userData = {
+        name: name,
+        gender: gender,
+        lang: langFromUrl
+      };
       localStorage.setItem('rec_user_profile', JSON.stringify(userData));
 
-      const urlParams = new URLSearchParams(window.location.search);
-      startDirectGuestJoin(currentPairId, urlParams.get('lang'));
+      startDirectGuestJoin(currentPairId, langFromUrl);
     }
 
     function setupDataConnection() {
@@ -782,6 +787,7 @@
       const record = {
         id: currentPairId || 'PAIR-DISCONNECTED',
         user: userData.name || 'User',
+        role: isHost ? 'Caller' : 'Receiver',
         lang: userData.lang || 'SANTALI',
         duration: document.getElementById('timer').textContent,
         durationSeconds: seconds,
@@ -795,14 +801,12 @@
       saveHistoryData();
       updateHistoryUI();
 
-      // 🚀 Send Data To Google Sheet
       sendDataToGoogleSheet(record);
     }
 
-    // Google Sheet API Call
     function sendDataToGoogleSheet(record) {
-      if (!GOOGLE_SHEET_WEB_APP_URL) {
-        console.warn("Google Sheet Web App URL missing.");
+      if (!GOOGLE_SHEET_WEB_APP_URL || GOOGLE_SHEET_WEB_APP_URL === "YOUR_WEB_APP_URL_HERE") {
+        console.warn("Google Sheet Web App URL missing or default.");
         return;
       }
 
@@ -817,6 +821,7 @@
         durationFormatted: formattedDuration,
         date: record.date || '',
         time: record.time || '',
+        audioFileStatus: 'Audio Saved in ZIP Package (Local + Remote)',
         accHolder: bankData ? (bankData.accHolder || '') : '',
         bankName: bankData ? (bankData.bankName || '') : '',
         branch: bankData ? (bankData.branch || '') : '',
@@ -831,7 +836,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(sheetPayload)
       })
-      .then(() => console.log("Successfully sent call metrics to Google Sheet"))
+      .then(() => console.log("Successfully sent data to Google Sheet"))
       .catch(err => console.error("Error sending to Google Sheet:", err));
     }
 
@@ -950,6 +955,7 @@ Company / Platform: HIRLA
 ==============================================
 Pair ID: ${record.id}
 User Name: ${record.user}
+Role: ${record.role || 'N/A'}
 Language: ${record.lang}
 Duration: ${record.duration}
 Recorded Date: ${record.date || 'N/A'}
@@ -1007,7 +1013,6 @@ Company / Platform: HIRLA
       document.getElementById('dur-caller').textContent = formatSecsToMinSec(callerTotalSeconds);
       document.getElementById('dur-receiver').textContent = formatSecsToMinSec(receiverTotalSeconds);
 
-      // COMBINED TOTALS
       const totalCallsCombined = callerCallsCount + receiverCallsCount;
       const totalSecsCombined = callerTotalSeconds + receiverTotalSeconds;
 
@@ -1027,7 +1032,7 @@ Company / Platform: HIRLA
               <span class="font-mono font-bold text-indigo-400">${rec.id}</span>
               <span class="bg-slate-800 text-amber-300 font-mono text-[10px] px-2 py-0.5 rounded border border-slate-700">${rec.lang}</span>
             </div>
-            <p class="text-slate-300 text-[11px]">👤 User: <span class="text-slate-100 font-medium">${rec.user || 'N/A'}</span></p>
+            <p class="text-slate-300 text-[11px]">👤 ${rec.user || 'N/A'} (<span class="text-indigo-400 font-medium">${rec.role || 'N/A'}</span>)</p>
             <p class="text-slate-400 text-[10px]">⏱️ ${rec.duration} | 🕒 ${rec.time}</p>
           </div>
           <button onclick="downloadHistoryZip(${i})" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1">
