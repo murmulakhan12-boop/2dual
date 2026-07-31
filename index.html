@@ -1,397 +1,1069 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HIRLA Dual-Channel WebRTC Call & Recording System</title>
-    <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-color: #f8fafc;
-            --primary: #3b82f6;
-            --success: #22c55e;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 900px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        h1, h2, h3 { margin-top: 0; }
-
-        .grid-form {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        input, select, button, textarea {
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #475569;
-            background-color: #334155;
-            color: white;
-            font-size: 14px;
-        }
-
-        button {
-            background-color: var(--primary);
-            cursor: pointer;
-            font-weight: bold;
-            border: none;
-            transition: background 0.2s;
-        }
-
-        button:hover { opacity: 0.9; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .btn-danger { background-color: var(--danger); }
-        .btn-success { background-color: var(--success); }
-        .btn-warning { background-color: var(--warning); }
-
-        .controls {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .status-box {
-            padding: 10px;
-            border-radius: 6px;
-            background: #0f172a;
-            font-family: monospace;
-            margin-top: 10px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-
-        th, td {
-            border: 1px solid #475569;
-            padding: 8px;
-            text-align: left;
-            font-size: 12px;
-        }
-
-        th { background-color: #334155; }
-
-        .alert-box {
-            padding: 12px;
-            background-color: #1e293b;
-            border-left: 4px solid var(--primary);
-            margin-bottom: 15px;
-            border-radius: 4px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dual-Channel Call & Drive Upload System - HIRLA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- JSZip and FileSaver for local ZIP creation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <!-- PeerJS for WebRTC Audio Streaming -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <style>
+    .pulse-red { animation: pulse 1.2s infinite; }
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.03); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+  </style>
 </head>
-<body>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
 
-<div class="container">
-    <div class="card">
-        <h1>🎙️ HIRLA Call & Recording System</h1>
-        <div id="alertArea" class="alert-box">सिस्टम तैयार है। अपनी प्रोफाइल भरें और स्टार्ट करें।</div>
-        
-        <!-- User Metadata Form -->
-        <h2>1. यूजर जानकारी (Profile Setup)</h2>
-        <div class="grid-form">
-            <div class="form-group">
-                <label>Name:</label>
-                <input type="text" id="userName" placeholder="अपना नाम दर्ज करें">
-            </div>
-            <div class="form-group">
-                <label>Gender:</label>
-                <select id="userGender">
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Language:</label>
-                <select id="userLanguage">
-                    <option value="Santali (Ol Chiki)">Santali (Ol Chiki)</option>
-                    <option value="Hindi">Hindi</option>
-                    <option value="Bengali">Bengali</option>
-                    <option value="English">English</option>
-                </select>
-            </div>
-        </div>
-        <button id="btnInit" onclick="initUserSession()">Start Setup / Allow Mic</button>
-    </div>
+  <!-- Remote Audio Playback Element -->
+  <audio id="remoteAudio" autoplay playsinline class="hidden"></audio>
 
-    <!-- WebRTC Connection Setup -->
-    <div class="card">
-        <h2>2. WebRTC कॉल कनेक्शन (Connection Setup)</h2>
-        <div class="controls">
-            <button id="btnCreateOffer" onclick="createOffer()" disabled>1. Link बनाएँ (Invite Partner)</button>
-            <button id="btnAnswer" onclick="handleOffer()" disabled>2. Link से जुड़ें (Accept Offer)</button>
-        </div>
-        <div style="margin-top: 10px;">
-            <textarea id="sdpData" rows="3" style="width: 100%;" placeholder="यहाँ Connection SDP डेटा दिखेगा या पेस्ट करें..."></textarea>
-        </div>
-        <div class="status-box" id="connectionStatus">Status: Disconnected</div>
-    </div>
-
-    <!-- Recording Section -->
-    <div class="card">
-        <h2>3. रिकॉर्डिंग और डेटा सिंक (Dual-Channel Recording)</h2>
-        <div class="controls">
-            <button id="btnStartRecord" class="btn-success" onclick="startRecording()" disabled>▶ Start Dual Recording</button>
-            <button id="btnStopRecord" class="btn-danger" onclick="stopRecording()" disabled>⏹ Stop & Auto Sync to Drive</button>
-        </div>
-        <div class="status-box" id="recordingStatus">Recording: Off</div>
-    </div>
-
-    <!-- History & Drive Data Table -->
-    <div class="card">
-        <h2>4. कॉल और ऑडियो रिकॉर्ड (Google Sheet History)</h2>
-        <div style="overflow-x:auto;">
-            <table id="historyTable">
-                <thead>
-                    <tr>
-                        <th>Date Time</th>
-                        <th>Name</th>
-                        <th>Gender</th>
-                        <th>Language</th>
-                        <th>Audio Link (Drive)</th>
-                    </tr>
-                </thead>
-                <tbody id="historyBody">
-                    <!-- Dynamic Data Rows -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<script>
-    // Config: Apps Script Web App URL
-    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwefGf4U_0Iscv101o0-sE-OAtwX1kG1UeJjI2cI_6u3lR5jL9K3tG/exec";
-
-    let localStream = null;
-    let peerConnection = null;
-    let mediaRecorder = null;
-    let recordedChunks = [];
+  <div class="w-full max-w-xl bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 relative overflow-hidden">
     
-    let userProfile = {
-        name: "",
-        gender: "",
-        language: ""
+    <!-- PAGE 1: USER REGISTRATION -->
+    <div id="page-1" class="space-y-5">
+      <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
+        <div>
+          <h2 class="text-2xl font-bold text-indigo-400">👤 User Registration</h2>
+          <p class="text-xs text-slate-400 mt-1">अपनी जानकारी दर्ज करके शुरू करें</p>
+        </div>
+        <span class="text-sm font-extrabold text-amber-400 tracking-wider bg-slate-900 px-3 py-1 rounded-lg border border-slate-700">HIRLA</span>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Name / नाम</label>
+          <input type="text" id="reg-name" placeholder="Enter your full name" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Gender / लिंग</label>
+          <select id="reg-gender" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+            <option value="">-- Select Gender --</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Language / भाषा</label>
+          <select id="reg-lang" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+            <option value="">-- Select Language --</option>
+            <option value="Santali">Santali</option>
+            <option value="Assamese">Assamese</option>
+            <option value="Bhojpuri">Bhojpuri</option>
+            <option value="Haryanvi">Haryanvi</option>
+            <option value="Chhattisgarhi">Chhattisgarhi</option>
+            <option value="Nepali">Nepali</option>
+            <option value="Marwadi">Marwadi</option>
+            <option value="Maithili">Maithili</option>
+            <option value="Bengali">Bengali</option>
+            <option value="Hindi">Hindi</option>
+          </select>
+        </div>
+
+        <button onclick="saveRegistrationAndProceed()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition mt-4 shadow-lg">
+          Start Setup ➔
+        </button>
+      </div>
+    </div>
+
+    <!-- PAGE 1B: GUEST / RECEIVER JOIN PAGE -->
+    <div id="page-guest-join" class="hidden space-y-5">
+      <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
+        <div>
+          <h2 class="text-2xl font-bold text-emerald-400">🎙️ Join Recording Session</h2>
+          <p class="text-xs text-slate-300 mt-1">
+            Language: <span id="guest-caller-lang" class="font-semibold font-mono text-amber-300">SANTALI</span>
+          </p>
+        </div>
+        <span class="text-xs font-bold text-amber-400 bg-slate-900 px-2.5 py-1 rounded border border-slate-700">HIRLA</span>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Your Name</label>
+          <input type="text" id="guest-name" placeholder="Enter your full name" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Your Gender</label>
+          <select id="guest-gender" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <button onclick="submitGuestJoin()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg transition shadow-lg mt-2">
+          Join Recording Room ➔
+        </button>
+      </div>
+    </div>
+
+    <!-- PAGE 2: MAIN DASHBOARD -->
+    <div id="page-2" class="hidden space-y-6">
+      <div class="flex justify-between items-start border-b border-slate-700 pb-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 id="dash-user-name" class="text-xl font-bold text-slate-100">User Dashboard</h2>
+            <span class="text-xs font-extrabold text-amber-400 bg-slate-900 px-2 py-0.5 rounded border border-amber-500/40">HIRLA</span>
+          </div>
+          <p id="dash-user-info" class="text-xs text-indigo-400 mt-0.5"></p>
+        </div>
+        <button onclick="resetProfile()" class="text-xs bg-rose-900/40 hover:bg-rose-800/60 text-rose-300 border border-rose-700/60 px-2.5 py-1 rounded-md transition flex items-center gap-1">
+          <span>🔄</span> Reset
+        </button>
+      </div>
+
+      <button onclick="switchPage(3)" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2 shadow-lg">
+        <span>🤝</span> Invite Partner
+      </button>
+
+      <!-- CALL METRICS DISPLAY -->
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-center">
+            <p class="text-xs text-slate-400">Total Caller Calls</p>
+            <p id="count-caller" class="text-2xl font-bold text-indigo-400 mt-1">0</p>
+            <p class="text-[11px] text-slate-400 mt-1">Duration: <span id="dur-caller" class="font-mono text-indigo-300 font-semibold">00m 00s</span></p>
+          </div>
+          <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl text-center">
+            <p class="text-xs text-slate-400">Total Receiver Calls</p>
+            <p id="count-receiver" class="text-2xl font-bold text-cyan-400 mt-1">0</p>
+            <p class="text-[11px] text-slate-400 mt-1">Duration: <span id="dur-receiver" class="font-mono text-cyan-300 font-semibold">00m 00s</span></p>
+          </div>
+        </div>
+
+        <div class="bg-slate-900/90 border border-emerald-500/40 p-3.5 rounded-xl flex items-center justify-between text-center">
+          <div>
+            <p class="text-[11px] text-slate-400 uppercase tracking-wider">Total Calls Made</p>
+            <p id="count-total-combined" class="text-xl font-bold text-emerald-400 mt-0.5">0</p>
+          </div>
+          <div class="h-8 w-px bg-slate-700"></div>
+          <div>
+            <p class="text-[11px] text-slate-400 uppercase tracking-wider">Total Combined Duration</p>
+            <p id="dur-total-combined" class="text-xl font-mono font-bold text-amber-400 mt-0.5">00m 00s</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASSBOOK & UPI DETAILS SECTION -->
+      <div class="bg-slate-900/80 border border-slate-700 p-4 rounded-xl space-y-3">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
+            <span>💳</span> Bank Passbook & UPI Details
+          </h3>
+          <button onclick="toggleBankEdit()" id="btn-edit-bank" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-slate-600">Edit</button>
+        </div>
+
+        <div id="bank-view" class="text-xs space-y-1 text-slate-300">
+          <p><span class="text-slate-500">Account Holder:</span> <span id="view-acc-holder" class="font-medium">Not added</span></p>
+          <p><span class="text-slate-500">Bank Name:</span> <span id="view-bank-name" class="font-medium">Not added</span></p>
+          <p><span class="text-slate-500">Branch:</span> <span id="view-bank-branch" class="font-medium">Not added</span></p>
+          <p><span class="text-slate-500">Account No:</span> <span id="view-acc-no" class="font-mono font-medium">Not added</span></p>
+          <p><span class="text-slate-500">IFSC Code:</span> <span id="view-ifsc" class="font-mono font-medium">Not added</span></p>
+          <p><span class="text-slate-500">UPI ID:</span> <span id="view-upi" class="font-mono font-semibold text-emerald-400">Not added</span></p>
+        </div>
+
+        <div id="bank-form" class="hidden space-y-2 text-xs">
+          <input type="text" id="input-acc-holder" placeholder="Account Holder Name" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <input type="text" id="input-bank-name" placeholder="Bank Name (e.g., SBI)" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <input type="text" id="input-bank-branch" placeholder="Branch Name" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <input type="text" id="input-acc-no" placeholder="Account Number" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <input type="text" id="input-ifsc" placeholder="IFSC Code" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <input type="text" id="input-upi" placeholder="UPI ID (e.g., user@upi)" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-amber-500">
+          <button onclick="saveBankDetails()" class="w-full bg-amber-600 hover:bg-amber-500 text-slate-900 font-bold py-2 rounded transition">Save Bank Details</button>
+        </div>
+      </div>
+
+      <!-- PREVIOUS RECORDINGS HISTORY -->
+      <div class="space-y-3">
+        <h3 class="text-sm font-semibold text-slate-300">Previous Recording Data / History</h3>
+        <div id="history-list" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+          <p class="text-xs text-slate-500 text-center py-4 bg-slate-900/50 rounded-lg">कोई रिकॉर्डिंग हिस्ट्री मौजूद नहीं है।</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 3: PARTNER INVITATION -->
+    <div id="page-3" class="hidden space-y-5">
+      <div class="border-b border-slate-700 pb-3">
+        <h2 class="text-2xl font-bold text-indigo-400">👥 Invite Partner</h2>
+        <p class="text-xs text-slate-400 mt-1">लिंग विकल्प चुनें और लिंक तैयार करें</p>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Partner Gender Option</label>
+          <select id="partner-gender" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+            <option value="Any">Any Gender</option>
+            <option value="Male">Male Partner</option>
+            <option value="Female">Female Partner</option>
+          </select>
+        </div>
+
+        <button onclick="generateMeetingLink()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition shadow-lg">
+          Generate Meeting Link
+        </button>
+        <button onclick="switchPage(2)" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 font-medium py-2 rounded-lg text-sm">
+          ← Back to Dashboard
+        </button>
+      </div>
+    </div>
+
+    <!-- PAGE 4: PAIR ID & COPY LINK -->
+    <div id="page-4" class="hidden space-y-5 text-center">
+      <div class="border-b border-slate-700 pb-3">
+        <h2 class="text-2xl font-bold text-indigo-400">🔗 Link & Pair Details</h2>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl space-y-2">
+        <p class="text-xs text-slate-400">Generated Pair ID</p>
+        <p id="display-pair-id" class="text-xl font-mono font-bold text-emerald-400 tracking-wider">PAIR-000000</p>
+      </div>
+
+      <div class="space-y-3">
+        <button onclick="copyInviteLink()" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium py-2.5 rounded-lg border border-slate-600 transition flex items-center justify-center gap-2">
+          <span>📋</span> Copy Invite Link
+        </button>
+        
+        <button onclick="enterRecordingRoom()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg transition shadow-lg">
+          Enter Recording Room ➔
+        </button>
+      </div>
+    </div>
+
+    <!-- PAGE 5: LIVE RECORDING ROOM -->
+    <div id="page-5" class="hidden space-y-5">
+      <div class="border-b border-slate-700 pb-3 flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-bold text-indigo-400">🎙️ Recording Room</h2>
+        </div>
+        <span id="rec-status-badge" class="text-xs bg-amber-900/60 text-amber-300 border border-amber-700 px-2.5 py-1 rounded-full">Connecting...</span>
+      </div>
+
+      <!-- PARTICIPANTS DISPLAY CARDS -->
+      <div class="grid grid-cols-2 gap-3">
+        <div id="box-caller" class="bg-slate-900/90 border border-indigo-500/50 p-3 rounded-xl space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Caller (Host)</span>
+            <span id="caller-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          </div>
+          <p id="room-caller-name" class="text-sm font-semibold text-slate-100 truncate">Connected</p>
+          <p id="caller-rec-indicator" class="text-[10px] text-emerald-400 font-mono">🔇 Noise Filter Active</p>
+        </div>
+
+        <div id="box-receiver" class="bg-slate-900/90 border border-cyan-500/50 p-3 rounded-xl space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">Receiver</span>
+            <span id="receiver-dot" class="w-2 h-2 rounded-full bg-amber-500"></span>
+          </div>
+          <p id="room-receiver-name" class="text-sm font-semibold text-slate-100 truncate">Waiting...</p>
+          <p id="receiver-rec-indicator" class="text-[10px] text-amber-400 font-mono">Connecting...</p>
+        </div>
+      </div>
+
+      <!-- Timer Banner -->
+      <div class="text-center bg-slate-900 border border-slate-700 py-4 rounded-xl space-y-2">
+        <p id="timer" class="text-4xl font-mono font-bold text-slate-100">00:00:00</p>
+        <p id="waiting-banner" class="text-xs text-amber-400 bg-amber-950/40 border border-amber-800/60 py-1.5 px-4 rounded-full font-medium inline-block">
+          ⏳ Waiting for partner connection…
+        </p>
+      </div>
+
+      <div class="text-center">
+        <p id="room-session-tag" class="text-xs font-mono tracking-widest text-slate-400 uppercase bg-slate-900/60 border border-slate-800 py-1.5 px-4 rounded-lg inline-block">
+          SESSION TAG
+        </p>
+      </div>
+
+      <!-- Controls -->
+      <div class="space-y-2">
+        <div id="host-controls" class="flex gap-3">
+          <button id="btn-start-rec" onclick="startDualRecording()" disabled class="flex-1 bg-emerald-600 opacity-50 cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg">
+            ▶️ Start Recording
+          </button>
+          <button id="btn-stop-rec" onclick="stopDualRecording()" disabled class="flex-1 bg-rose-600 opacity-50 cursor-not-allowed text-white font-semibold py-3 rounded-lg transition shadow-lg">
+            ⏹️ Stop Recording
+          </button>
+        </div>
+
+        <button id="btn-disconnect" onclick="disconnectCall(true)" class="w-full bg-rose-900/80 hover:bg-rose-800 text-rose-200 border border-rose-700 font-semibold py-2.5 rounded-lg transition shadow-md flex items-center justify-center gap-2">
+          <span>📞</span> Disconnect Call / End Session
+        </button>
+      </div>
+
+      <!-- Downloads Output -->
+      <div id="download-section" class="hidden bg-slate-900 border border-slate-700 p-4 rounded-xl space-y-3">
+        <h3 class="text-sm font-semibold text-emerald-400 border-b border-slate-800 pb-1">✅ Audio Output Files Ready</h3>
+
+        <div class="space-y-2">
+          <div class="flex items-center justify-between bg-slate-800 p-2.5 rounded border border-slate-700">
+            <span class="text-xs text-indigo-300 font-medium">1. Local Voice Stream (Clean)</span>
+            <a id="dl-local" download="Local_Audio.wav" class="text-xs bg-indigo-600 hover:bg-indigo-500 px-3 py-1.5 rounded font-medium">Download</a>
+          </div>
+
+          <div class="flex items-center justify-between bg-slate-800 p-2.5 rounded border border-slate-700">
+            <span class="text-xs text-cyan-300 font-medium">2. Remote Voice Stream (Clean)</span>
+            <a id="dl-remote" download="Remote_Audio.wav" class="text-xs bg-cyan-600 hover:bg-cyan-500 px-3 py-1.5 rounded font-medium">Download</a>
+          </div>
+
+          <div class="flex items-center justify-between bg-slate-800 p-2.5 rounded border border-slate-700">
+            <span class="text-xs text-amber-300 font-medium">3. ZIP Package (Dual Audio + Metadata)</span>
+            <button onclick="downloadCurrentZip()" class="text-xs bg-amber-600 hover:bg-amber-500 px-3 py-1.5 rounded font-medium">📦 Download ZIP</button>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="goToDashboardAndRefresh()" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 font-medium py-2 rounded-lg text-sm">
+        Return to Dashboard
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    // 🔗 UPDATED NEW GOOGLE SHEET WEB APP URL
+    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxm-ZFdBIeX5W_ltwL_IY55HcWSJhSKYd0t-Z-lmhlt7-tixOtDd0-FEw4HIV-nQBVqJQ/exec";
+
+    let userData = {};
+    let bankData = {};
+    let currentPairId = '';
+    let isHost = true;
+    let peer = null;
+    let peerConn = null;
+    let currentCall = null;
+    let localStream = null;
+    let remoteStream = null;
+
+    let localRecorder, remoteRecorder;
+    let localChunks = [], remoteChunks = [];
+    let localAudioBlob = null, remoteAudioBlob = null;
+    let isRecording = false;
+    let historySaved = false;
+    let userDisconnectedManual = false;
+    let connectRetryCount = 0;
+    
+    let timerInterval;
+    let seconds = 0;
+
+    let callerCallsCount = 0;
+    let receiverCallsCount = 0;
+    let callerTotalSeconds = 0;
+    let receiverTotalSeconds = 0;
+
+    let callHistory = [];
+
+    const peerOptions = {
+      debug: 1,
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+          { urls: 'stun:stun3.l.google.com:19302' },
+          { urls: 'stun:stun4.l.google.com:19302' },
+          { urls: 'stun:global.stun.twilio.com:3478' }
+        ],
+        iceCandidatePoolSize: 10,
+        sdpSemantics: 'unified-plan'
+      }
     };
 
-    const configuration = {
-        iceServers: [{ urls: 'stun:stun.l.google.com:19020' }]
+    async function getCleanAudioStream() {
+      return await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: 48000
+        }
+      });
+    }
+
+    window.onload = function() {
+      loadSavedData();
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const pairFromUrl = urlParams.get('pair');
+      const langFromUrl = urlParams.get('lang');
+
+      if (pairFromUrl) {
+        isHost = false; 
+        currentPairId = pairFromUrl;
+        
+        if (userData && userData.name) {
+          startDirectGuestJoin(pairFromUrl, langFromUrl);
+        } else {
+          document.getElementById('guest-caller-lang').textContent = langFromUrl || 'SANTALI';
+          switchPage('guest-join');
+        }
+      } else if (userData && userData.name) {
+        renderDashboard();
+        switchPage(2);
+      } else {
+        switchPage(1);
+      }
     };
 
-    function showAlert(msg) {
-        document.getElementById('alertArea').innerText = msg;
+    function switchPage(pageId) {
+      ['1', 'guest-join', '2', '3', '4', '5'].forEach(p => {
+        const el = document.getElementById(p === 'guest-join' ? 'page-guest-join' : `page-${p}`);
+        if (el) el.classList.add('hidden');
+      });
+      const target = pageId === 'guest-join' ? document.getElementById('page-guest-join') : document.getElementById(`page-${pageId}`);
+      if (target) target.classList.remove('hidden');
     }
 
-    // Step 1: User Profile Setup & Mic Access
-    async function initUserSession() {
-        const name = document.getElementById('userName').value.trim();
-        if (!name) {
-            alert('कृपया अपना नाम भरें!');
-            return;
-        }
+    function saveRegistrationAndProceed() {
+      const name = document.getElementById('reg-name').value.trim();
+      const gender = document.getElementById('reg-gender').value;
+      const lang = document.getElementById('reg-lang').value;
 
-        userProfile.name = name;
-        userProfile.gender = document.getElementById('userGender').value;
-        userProfile.language = document.getElementById('userLanguage').value;
-
-        try {
-            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-            showAlert(`माइक चालू हो गया है! प्रोफाइल: ${userProfile.name} (${userProfile.language})`);
-            document.getElementById('btnCreateOffer').disabled = false;
-            document.getElementById('btnAnswer').disabled = false;
-            document.getElementById('btnInit').disabled = true;
-        } catch (err) {
-            console.error(err);
-            showAlert("माइक एक्सेस करने में समस्या आई: " + err.message);
-        }
+      if (!name || !gender || !lang) { alert('कृपया सभी जानकारी भरें।'); return; }
+      userData = { name, gender, lang };
+      localStorage.setItem('rec_user_profile', JSON.stringify(userData));
+      renderDashboard();
+      switchPage(2);
     }
 
-    // Step 2: WebRTC Offer / Answer Handling
-    function setupPeerConnection() {
-        peerConnection = new RTCPeerConnection(configuration);
+    function renderDashboard() {
+      document.getElementById('dash-user-name').textContent = `Welcome, ${userData.name}`;
+      document.getElementById('dash-user-info').textContent = `Gender: ${userData.gender} | Language: ${userData.lang}`;
+      renderBankUI();
+      updateHistoryUI();
+    }
 
-        localStream.getTracks().forEach(track => {
-            peerConnection.addTrack(track, localStream);
+    function toggleBankEdit() {
+      const form = document.getElementById('bank-form');
+      const view = document.getElementById('bank-view');
+      const btn = document.getElementById('btn-edit-bank');
+      if (form.classList.contains('hidden')) {
+        form.classList.remove('hidden');
+        view.classList.add('hidden');
+        btn.textContent = 'Cancel';
+      } else {
+        form.classList.add('hidden');
+        view.classList.remove('hidden');
+        btn.textContent = 'Edit';
+      }
+    }
+
+    function saveBankDetails() {
+      bankData = {
+        accHolder: document.getElementById('input-acc-holder').value.trim(),
+        bankName: document.getElementById('input-bank-name').value.trim(),
+        branch: document.getElementById('input-bank-branch').value.trim(),
+        accNo: document.getElementById('input-acc-no').value.trim(),
+        ifsc: document.getElementById('input-ifsc').value.trim(),
+        upi: document.getElementById('input-upi').value.trim()
+      };
+      localStorage.setItem('rec_bank_details', JSON.stringify(bankData));
+      renderBankUI();
+      toggleBankEdit();
+    }
+
+    function renderBankUI() {
+      if (bankData) {
+        document.getElementById('view-acc-holder').textContent = bankData.accHolder || 'Not added';
+        document.getElementById('view-bank-name').textContent = bankData.bankName || 'Not added';
+        document.getElementById('view-bank-branch').textContent = bankData.branch || 'Not added';
+        document.getElementById('view-acc-no').textContent = bankData.accNo || 'Not added';
+        document.getElementById('view-ifsc').textContent = bankData.ifsc || 'Not added';
+        document.getElementById('view-upi').textContent = bankData.upi || 'Not added';
+
+        document.getElementById('input-acc-holder').value = bankData.accHolder || '';
+        document.getElementById('input-bank-name').value = bankData.bankName || '';
+        document.getElementById('input-bank-branch').value = bankData.branch || '';
+        document.getElementById('input-acc-no').value = bankData.accNo || '';
+        document.getElementById('input-ifsc').value = bankData.ifsc || '';
+        document.getElementById('input-upi').value = bankData.upi || '';
+      }
+    }
+
+    function formatSecsToMinSec(totalSeconds) {
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = totalSeconds % 60;
+      return `${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
+    }
+
+    function generateMeetingLink() {
+      currentPairId = 'PAIR-' + Math.floor(100000 + Math.random() * 900000);
+      document.getElementById('display-pair-id').textContent = currentPairId;
+      switchPage(4);
+    }
+
+    function copyInviteLink() {
+      const inviteUrl = `${window.location.origin}${window.location.pathname}?pair=${currentPairId}&lang=${encodeURIComponent(userData.lang)}`;
+      navigator.clipboard.writeText(inviteUrl);
+      alert('Invite Link Copied:\n' + inviteUrl);
+    }
+
+    async function enterRecordingRoom() {
+      isHost = true;
+      historySaved = false;
+      userDisconnectedManual = false;
+      connectRetryCount = 0;
+      switchPage(5);
+
+      document.getElementById('room-caller-name').textContent = isHost ? `${userData.name} (You)` : 'Connected';
+      document.getElementById('room-receiver-name').textContent = `Waiting for partner...`;
+      document.getElementById('room-session-tag').textContent = `${currentPairId} · ${(userData.lang || 'SANTALI').toUpperCase()}`;
+      document.getElementById('host-controls').classList.remove('hidden');
+
+      try {
+        localStream = await getCleanAudioStream();
+      } catch(e) {
+        alert("Microphone permission needed!");
+        return;
+      }
+
+      initializePeer(currentPairId);
+    }
+
+    async function startDirectGuestJoin(pairId, langName) {
+      isHost = false; 
+      historySaved = false;
+      userDisconnectedManual = false;
+      connectRetryCount = 0;
+
+      switchPage(5);
+
+      document.getElementById('room-caller-name').textContent = 'Caller';
+      document.getElementById('room-receiver-name').textContent = `${userData.name} (You)`;
+      document.getElementById('room-session-tag').textContent = `${pairId} · ${(langName || 'SANTALI').toUpperCase()}`;
+      document.getElementById('host-controls').classList.add('hidden');
+
+      try {
+        localStream = await getCleanAudioStream();
+      } catch(e) {
+        alert("Microphone permission needed!");
+        return;
+      }
+
+      initializePeer(null, pairId);
+    }
+
+    function initializePeer(customId = null, targetPairId = null) {
+      if (peer) { try { peer.destroy(); } catch(e){} }
+
+      peer = customId ? new Peer(customId, peerOptions) : new Peer(peerOptions);
+
+      peer.on('open', (id) => {
+        if (!isHost && targetPairId) {
+          retryConnectToHost(targetPairId);
+        }
+      });
+
+      peer.on('connection', (conn) => {
+        peerConn = conn;
+        setupDataConnection();
+      });
+
+      peer.on('call', (call) => {
+        currentCall = call;
+        call.answer(localStream);
+        
+        call.on('stream', (rStream) => {
+          remoteStream = rStream;
+          const remoteEl = document.getElementById('remoteAudio');
+          remoteEl.srcObject = rStream;
+          remoteEl.play().catch(e => console.log("Audio play error:", e));
+          markConnectedState();
         });
+      });
 
-        peerConnection.onicecandidate = event => {
-            if (event.candidate === null) {
-                document.getElementById('sdpData').value = JSON.stringify(peerConnection.localDescription);
-            }
-        };
+      peer.on('disconnected', () => {
+        if (!userDisconnectedManual && peer && !peer.destroyed) {
+          peer.reconnect();
+        }
+      });
 
-        peerConnection.ontrack = event => {
-            console.log("Remote track received");
-            document.getElementById('connectionStatus').innerText = "Status: Connected to Peer";
-            document.getElementById('btnStartRecord').disabled = false;
-        };
+      peer.on('error', (err) => {
+        if ((err.type === 'peer-unavailable' || err.type === 'network' || err.type === 'webrtc') && !isHost && connectRetryCount < 5) {
+          connectRetryCount++;
+          setTimeout(() => retryConnectToHost(targetPairId), 1500);
+        }
+      });
     }
 
-    async function createOffer() {
-        setupPeerConnection();
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-        showAlert("Connection Link (SDP) बन गया है। इसे अपने पार्टनर को भेजें।");
-    }
+    function retryConnectToHost(targetPairId) {
+      if (!peer || peer.destroyed) return;
 
-    async function handleOffer() {
-        const sdpText = document.getElementById('sdpData').value.trim();
-        if (!sdpText) {
-            alert("कृपया SDP डाटा टेक्स्टबॉक्स में पेस्ट करें!");
-            return;
-        }
+      peerConn = peer.connect(targetPairId, { reliable: true });
+      setupDataConnection();
 
-        const sdpData = JSON.parse(sdpText);
-
-        if (!peerConnection) {
-            setupPeerConnection();
-        }
-
-        if (sdpData.type === 'offer') {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(sdpData));
-            const answer = await peerConnection.createAnswer();
-            await peerConnection.setLocalDescription(answer);
-            showAlert("Answer SDP जनरेट हो गया है! इसे ऑफ़र देने वाले को वापस भेजें।");
-        } else if (sdpData.type === 'answer') {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(sdpData));
-            showAlert("कनेक्शन पूरा हो चुका है!");
-            document.getElementById('connectionStatus').innerText = "Status: Call Connected";
-            document.getElementById('btnStartRecord').disabled = false;
-        }
-    }
-
-    // Step 3: Dual-Channel Recording Logic
-    function startRecording() {
-        recordedChunks = [];
-        const audioContext = new AudioContext();
-        const dest = audioContext.createMediaStreamDestination();
-
-        // Local Stream
-        if (localStream) {
-            const localSource = audioContext.createMediaStreamSource(localStream);
-            localSource.connect(dest);
-        }
-
-        // Remote Stream
-        const receivers = peerConnection.getReceivers();
-        receivers.forEach(receiver => {
-            if (receiver.track && receiver.track.kind === 'audio') {
-                const remoteStream = new MediaStream([receiver.track]);
-                const remoteSource = audioContext.createMediaStreamSource(remoteStream);
-                remoteSource.connect(dest);
-            }
+      currentCall = peer.call(targetPairId, localStream);
+      if (currentCall) {
+        currentCall.on('stream', (rStream) => {
+          remoteStream = rStream;
+          const remoteEl = document.getElementById('remoteAudio');
+          remoteEl.srcObject = rStream;
+          remoteEl.play().catch(e => console.log("Audio play error:", e));
+          markConnectedState();
         });
-
-        mediaRecorder = new MediaRecorder(dest.stream);
-
-        mediaRecorder.ondataavailable = event => {
-            if (event.data.size > 0) {
-                recordedChunks.push(event.data);
-            }
-        };
-
-        mediaRecorder.onstop = saveRecordedDataToHistory;
-
-        mediaRecorder.start();
-        document.getElementById('recordingStatus').innerText = "Recording: Active 🔴";
-        document.getElementById('btnStartRecord').disabled = true;
-        document.getElementById('btnStopRecord').disabled = false;
-        showAlert("रिकॉर्डिंग शुरू हो चुकी है...");
+      }
     }
 
-    function stopRecording() {
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-            mediaRecorder.stop();
-            document.getElementById('recordingStatus').innerText = "Recording: Saved & Uploading...";
-            document.getElementById('btnStartRecord').disabled = false;
-            document.getElementById('btnStopRecord').disabled = true;
+    async function submitGuestJoin() {
+      const name = document.getElementById('guest-name').value.trim();
+      const gender = document.getElementById('guest-gender').value;
+      if (!name) return alert('अपना नाम दर्ज करें');
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const langFromUrl = urlParams.get('lang') || 'SANTALI';
+
+      userData = {
+        name: name,
+        gender: gender,
+        lang: langFromUrl
+      };
+      localStorage.setItem('rec_user_profile', JSON.stringify(userData));
+
+      startDirectGuestJoin(currentPairId, langFromUrl);
+    }
+
+    function setupDataConnection() {
+      if (!peerConn) return;
+
+      peerConn.on('open', () => {
+        peerConn.send({ type: 'JOINED' });
+      });
+
+      peerConn.on('data', (data) => {
+        if (data.type === 'JOINED') {
+          if (isHost) {
+            document.getElementById('room-receiver-name').textContent = 'Connected Partner';
+          }
+          markConnectedState();
+        } else if (data.type === 'START_REC') {
+          executeStartRecording();
+        } else if (data.type === 'STOP_REC') {
+          executeStopRecording();
+        } else if (data.type === 'DISCONNECT') {
+          disconnectCall(false);
         }
+      });
+
+      peerConn.on('close', () => {
+        if (!userDisconnectedManual && isRecording) {
+          handleUnexpectedDisconnect();
+        }
+      });
     }
 
-    // Step 4: Auto Sync to Google Drive and Google Sheet
+    function markConnectedState() {
+      document.getElementById('receiver-dot').className = "w-2 h-2 rounded-full bg-emerald-500";
+      document.getElementById('receiver-rec-indicator').textContent = "🔇 Noise Filter Active";
+      document.getElementById('receiver-rec-indicator').className = "text-[10px] text-emerald-400 font-mono";
+
+      document.getElementById('rec-status-badge').textContent = "Connected";
+      document.getElementById('rec-status-badge').className = "text-xs bg-emerald-900/60 text-emerald-300 border border-emerald-700 px-2.5 py-1 rounded-full";
+
+      const banner = document.getElementById('waiting-banner');
+      banner.textContent = "🟢 Partner Connected! Ready for Dual Recording.";
+      banner.className = "text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
+
+      if (isHost) {
+        const btn = document.getElementById('btn-start-rec');
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    function startDualRecording() {
+      if (peerConn && peerConn.open) peerConn.send({ type: 'START_REC' });
+      executeStartRecording();
+    }
+
+    function executeStartRecording() {
+      localChunks = [];
+      remoteChunks = [];
+      isRecording = true;
+      historySaved = false;
+
+      localRecorder = new MediaRecorder(localStream);
+      localRecorder.ondataavailable = e => { if (e.data.size > 0) localChunks.push(e.data); };
+      localRecorder.start(1000);
+
+      if (remoteStream) {
+        remoteRecorder = new MediaRecorder(remoteStream);
+        remoteRecorder.ondataavailable = e => { if (e.data.size > 0) remoteChunks.push(e.data); };
+        remoteRecorder.start(1000);
+      }
+
+      startTimer();
+
+      document.getElementById('rec-status-badge').textContent = "● Recording";
+      document.getElementById('rec-status-badge').className = "text-xs bg-rose-900/60 text-rose-300 border border-rose-700 px-2.5 py-1 rounded-full pulse-red";
+
+      document.getElementById('caller-rec-indicator').textContent = "🔴 Recording On (Clean)";
+      document.getElementById('caller-rec-indicator').className = "text-[10px] text-rose-400 font-mono pulse-red";
+
+      document.getElementById('receiver-rec-indicator').textContent = "🔴 Recording On (Clean)";
+      document.getElementById('receiver-rec-indicator').className = "text-[10px] text-rose-400 font-mono pulse-red";
+
+      const banner = document.getElementById('waiting-banner');
+      banner.textContent = "🔴 Live Noise-Filtered Dual Recording Active";
+      banner.className = "text-xs text-rose-400 bg-rose-950/40 border border-rose-800/60 py-1.5 px-4 rounded-full inline-block font-medium pulse-red";
+
+      if (isHost) {
+        document.getElementById('btn-start-rec').disabled = true;
+        document.getElementById('btn-start-rec').classList.add('opacity-50');
+        document.getElementById('btn-stop-rec').disabled = false;
+        document.getElementById('btn-stop-rec').classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    function stopDualRecording() {
+      if (peerConn && peerConn.open) peerConn.send({ type: 'STOP_REC' });
+      executeStopRecording();
+    }
+
+    function executeStopRecording() {
+      if (!isRecording && historySaved) return;
+      isRecording = false;
+      stopTimer();
+
+      if (localRecorder && localRecorder.state !== 'inactive') localRecorder.stop();
+      if (remoteRecorder && remoteRecorder.state !== 'inactive') remoteRecorder.stop();
+
+      setTimeout(async () => {
+        saveRecordedDataToHistory();
+      }, 500);
+
+      document.getElementById('rec-status-badge').textContent = "Stopped";
+      document.getElementById('rec-status-badge').className = "text-xs bg-slate-700 px-2.5 py-1 rounded-full text-slate-400";
+
+      document.getElementById('caller-rec-indicator').textContent = "Mic: Idle";
+      document.getElementById('caller-rec-indicator').className = "text-[10px] text-slate-400 font-mono";
+
+      document.getElementById('receiver-rec-indicator').textContent = "Mic: Idle";
+      document.getElementById('receiver-rec-indicator').className = "text-[10px] text-slate-400 font-mono";
+
+      const banner = document.getElementById('waiting-banner');
+      banner.textContent = "⏹️ Dual Recording Completed & Uploading...";
+      banner.className = "text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
+
+      if (isHost) {
+        document.getElementById('btn-start-rec').disabled = false;
+        document.getElementById('btn-start-rec').classList.remove('opacity-50');
+        document.getElementById('btn-stop-rec').disabled = true;
+        document.getElementById('btn-stop-rec').classList.add('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
     async function saveRecordedDataToHistory() {
-        showAlert("ऑडियो ड्राइव में अपलोड और गूगल शीट सिंक हो रहा है... कृपया प्रतीक्षा करें।");
+      if (historySaved) return;
+      if (localChunks.length === 0) return;
 
-        const audioBlob = new Blob(recordedChunks, { type: 'audio/webm' });
-        const reader = new FileReader();
+      historySaved = true;
+      localAudioBlob = new Blob(localChunks, { type: 'audio/wav' });
+      remoteAudioBlob = remoteChunks.length > 0 ? new Blob(remoteChunks, { type: 'audio/wav' }) : localAudioBlob;
 
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = async function () {
-            const base64Audio = reader.result.split(',')[1];
+      document.getElementById('dl-local').href = URL.createObjectURL(localAudioBlob);
+      document.getElementById('dl-remote').href = URL.createObjectURL(remoteAudioBlob);
+      document.getElementById('download-section').classList.remove('hidden');
 
-            const payload = {
-                name: userProfile.name,
-                gender: userProfile.gender,
-                language: userProfile.language,
-                timestamp: new Date().toLocaleString(),
-                audioBase64: base64Audio,
-                fileName: `HIRLA_${userProfile.name}_${Date.now()}.webm`
-            };
+      if (isHost) {
+        callerCallsCount++;
+        callerTotalSeconds += seconds;
+      } else {
+        receiverCallsCount++;
+        receiverTotalSeconds += seconds;
+      }
 
-            try {
-                const response = await fetch(GOOGLE_SHEET_WEB_APP_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+      const localBase64 = await blobToBase64(localAudioBlob);
+      const remoteBase64 = await blobToBase64(remoteAudioBlob);
 
-                showAlert("✅ ऑडियो सफलतापूर्वक Admin (Google Sheet & Drive) तक पहुँच गया!");
-                
-                // Add Local Row View
-                const table = document.getElementById('historyBody');
-                const row = table.insertRow(0);
-                row.insertCell(0).innerText = payload.timestamp;
-                row.insertCell(1).innerText = payload.name;
-                row.insertCell(2).innerText = payload.gender;
-                row.insertCell(3).innerText = payload.language;
-                row.insertCell(4).innerHTML = `<span style="color: #22c55e;">Synced to Drive ✅</span>`;
+      const record = {
+        id: currentPairId || 'PAIR-DISCONNECTED',
+        user: userData.name || 'User',
+        role: isHost ? 'Caller' : 'Receiver',
+        lang: userData.lang || 'SANTALI',
+        duration: document.getElementById('timer').textContent,
+        durationSeconds: seconds,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date: new Date().toLocaleDateString(),
+        localData: localBase64,
+        remoteData: remoteBase64
+      };
 
-            } catch (error) {
-                console.error("Upload error:", error);
-                showAlert("❌ अपलोड करने में त्रुटि आई!");
-            }
-        };
+      callHistory.unshift(record);
+      saveHistoryData();
+      updateHistoryUI();
+
+      sendDataToGoogleSheet(record);
     }
-</script>
 
+    function sendDataToGoogleSheet(record) {
+      if (!GOOGLE_SHEET_WEB_APP_URL || GOOGLE_SHEET_WEB_APP_URL === "YOUR_WEB_APP_URL_HERE") {
+        console.warn("Google Sheet Web App URL missing or default.");
+        return;
+      }
+
+      const formattedDuration = formatSecsToMinSec(record.durationSeconds || 0);
+
+      const banner = document.getElementById('waiting-banner');
+      if (banner) {
+        banner.textContent = "⏳ Admin (Google Drive) को ऑडियो भेजा जा रहा है...";
+      }
+
+      const sheetPayload = {
+        pairId: record.id || '',
+        userName: userData.name || '',
+        role: isHost ? 'Caller' : 'Receiver',
+        lang: record.lang || '',
+        durationSeconds: record.durationSeconds || 0,
+        durationFormatted: formattedDuration,
+        date: record.date || '',
+        time: record.time || '',
+        localAudioBase64: record.localData || '',
+        remoteAudioBase64: record.remoteData || '',
+        accHolder: bankData ? (bankData.accHolder || '') : '',
+        bankName: bankData ? (bankData.bankName || '') : '',
+        branch: bankData ? (bankData.branch || '') : '',
+        accNo: bankData ? (bankData.accNo || '') : '',
+        ifsc: bankData ? (bankData.ifsc || '') : '',
+        upi: bankData ? (bankData.upi || '') : ''
+      };
+
+      fetch(GOOGLE_SHEET_WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sheetPayload)
+      })
+      .then(() => {
+        console.log("Successfully sent audio & details to Google Drive & Sheet");
+        if (banner) {
+          banner.textContent = "✅ ऑडियो सफ़लतापूर्वक Admin (Google Sheet) तक पहुँच गया!";
+        }
+      })
+      .catch(err => console.error("Error sending to Google Sheet:", err));
+    }
+
+    function disconnectCall(sendSignal = true) {
+      userDisconnectedManual = true;
+
+      if (sendSignal && peerConn && peerConn.open) {
+        try { peerConn.send({ type: 'DISCONNECT' }); } catch(e){}
+      }
+
+      if (isRecording) {
+        executeStopRecording();
+      }
+
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+      }
+
+      if (peerConn) try { peerConn.close(); } catch(e){}
+      if (currentCall) try { currentCall.close(); } catch(e){}
+      if (peer) try { peer.destroy(); } catch(e){}
+
+      document.getElementById('rec-status-badge').textContent = "Disconnected";
+      document.getElementById('rec-status-badge').className = "text-xs bg-rose-950 text-rose-400 border border-rose-800 px-2.5 py-1 rounded-full";
+
+      const banner = document.getElementById('waiting-banner');
+      banner.textContent = "❌ Call Disconnected / Session Ended";
+      banner.className = "text-xs text-rose-400 bg-rose-950/40 border border-rose-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
+
+      document.getElementById('receiver-dot').className = "w-2 h-2 rounded-full bg-rose-500";
+      document.getElementById('receiver-rec-indicator').textContent = "Disconnected";
+      document.getElementById('receiver-rec-indicator').className = "text-[10px] text-rose-400 font-mono";
+    }
+
+    function handleUnexpectedDisconnect() {
+      if (isRecording) {
+        executeStopRecording();
+      }
+      document.getElementById('rec-status-badge').textContent = "Signal Lost";
+      document.getElementById('rec-status-badge').className = "text-xs bg-amber-950 text-amber-400 border border-amber-800 px-2.5 py-1 rounded-full";
+
+      const banner = document.getElementById('waiting-banner');
+      banner.textContent = "⚠️ Signal Lost! Saving recorded audio...";
+      banner.className = "text-xs text-amber-400 bg-amber-950/40 border border-amber-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
+    }
+
+    function startTimer() {
+      seconds = 0;
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        seconds++;
+        const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
+        const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+        const secs = String(seconds % 60).padStart(2, '0');
+        document.getElementById('timer').textContent = `${hrs}:${mins}:${secs}`;
+      }, 1000);
+    }
+
+    function stopTimer() { clearInterval(timerInterval); }
+
+    function blobToBase64(blob) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    function downloadCurrentZip() {
+      if (!localAudioBlob) return alert("Audio files missing.");
+      const zip = new JSZip();
+      
+      const hostName = isHost ? "Caller" : "Receiver";
+      const remoteName = isHost ? "Receiver" : "Caller";
+
+      zip.file(`${hostName}_Audio_${currentPairId}.wav`, localAudioBlob);
+      if (remoteAudioBlob) {
+        zip.file(`${remoteName}_Audio_${currentPairId}.wav`, remoteAudioBlob);
+      }
+
+      const metadataContent = 
+`==============================================
+          HIRLA DUAL RECORDING DETAILS        
+==============================================
+Pair ID: ${currentPairId}
+User Name: ${userData.name || 'User'}
+Role: ${isHost ? 'Caller' : 'Receiver'}
+Language: ${userData.lang || 'SANTALI'}
+Duration: ${document.getElementById('timer').textContent}
+Recorded Date: ${new Date().toLocaleDateString()}
+Recorded Time: ${new Date().toLocaleTimeString()}
+Company / Platform: HIRLA
+==============================================`;
+
+      zip.file(`Details_${currentPairId}.txt`, metadataContent);
+
+      zip.generateAsync({ type: "blob" }).then(content => {
+        saveAs(content, `${currentPairId}_HIRLA_DualAudio.zip`);
+      });
+    }
+
+    function downloadHistoryZip(index) {
+      const record = callHistory[index];
+      if (!record || !record.localData) return alert("Audio record missing.");
+
+      const zip = new JSZip();
+      const localBlob = dataURItoBlob(record.localData);
+      const remoteBlob = record.remoteData ? dataURItoBlob(record.remoteData) : localBlob;
+
+      zip.file(`Local_Audio_${record.id}.wav`, localBlob);
+      zip.file(`Remote_Audio_${record.id}.wav`, remoteBlob);
+
+      const metadataContent = 
+`==============================================
+          HIRLA DUAL RECORDING DETAILS        
+==============================================
+Pair ID: ${record.id}
+User Name: ${record.user}
+Role: ${record.role || 'N/A'}
+Language: ${record.lang}
+Duration: ${record.duration}
+Recorded Date: ${record.date || 'N/A'}
+Recorded Time: ${record.time || 'N/A'}
+Company / Platform: HIRLA
+==============================================`;
+
+      zip.file(`Details_${record.id}.txt`, metadataContent);
+
+      zip.generateAsync({ type: "blob" }).then(content => {
+        saveAs(content, `${record.id}_${record.lang}_HIRLA.zip`);
+      });
+    }
+
+    function dataURItoBlob(dataURI) {
+      const byteString = atob(dataURI.split(',')[1]);
+      const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+      return new Blob([ab], { type: mimeString });
+    }
+
+    function saveHistoryData() {
+      localStorage.setItem('rec_caller_count', callerCallsCount);
+      localStorage.setItem('rec_receiver_count', receiverCallsCount);
+      localStorage.setItem('rec_caller_sec', callerTotalSeconds);
+      localStorage.setItem('rec_receiver_sec', receiverTotalSeconds);
+
+      try {
+        localStorage.setItem('rec_history_list', JSON.stringify(callHistory.slice(0, 10)));
+      } catch(e) {}
+    }
+
+    function loadSavedData() {
+      const prof = localStorage.getItem('rec_user_profile');
+      if (prof) userData = JSON.parse(prof);
+
+      const bnk = localStorage.getItem('rec_bank_details');
+      if (bnk) bankData = JSON.parse(bnk);
+
+      callerCallsCount = parseInt(localStorage.getItem('rec_caller_count')) || 0;
+      receiverCallsCount = parseInt(localStorage.getItem('rec_receiver_count')) || 0;
+      callerTotalSeconds = parseInt(localStorage.getItem('rec_caller_sec')) || 0;
+      receiverTotalSeconds = parseInt(localStorage.getItem('rec_receiver_sec')) || 0;
+
+      const hist = localStorage.getItem('rec_history_list');
+      if (hist) callHistory = JSON.parse(hist);
+    }
+
+    function updateHistoryUI() {
+      document.getElementById('count-caller').textContent = callerCallsCount;
+      document.getElementById('count-receiver').textContent = receiverCallsCount;
+
+      document.getElementById('dur-caller').textContent = formatSecsToMinSec(callerTotalSeconds);
+      document.getElementById('dur-receiver').textContent = formatSecsToMinSec(receiverTotalSeconds);
+
+      const totalCallsCombined = callerCallsCount + receiverCallsCount;
+      const totalSecsCombined = callerTotalSeconds + receiverTotalSeconds;
+
+      document.getElementById('count-total-combined').textContent = totalCallsCombined;
+      document.getElementById('dur-total-combined').textContent = formatSecsToMinSec(totalSecsCombined);
+
+      const historyList = document.getElementById('history-list');
+      if (!callHistory || callHistory.length === 0) {
+        historyList.innerHTML = `<p class="text-xs text-slate-500 text-center py-4 bg-slate-900/50 rounded-lg">कोई रिकॉर्डिंग हिस्ट्री मौजूद नहीं है।</p>`;
+        return;
+      }
+
+      historyList.innerHTML = callHistory.map((rec, i) => `
+        <div class="bg-slate-900/90 border border-slate-700/80 p-3 rounded-xl flex items-center justify-between text-xs transition hover:border-slate-600">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="font-mono font-bold text-indigo-400">${rec.id}</span>
+              <span class="bg-slate-800 text-amber-300 font-mono text-[10px] px-2 py-0.5 rounded border border-slate-700">${rec.lang}</span>
+            </div>
+            <p class="text-slate-300 text-[11px]">👤 ${rec.user || 'N/A'} (<span class="text-indigo-400 font-medium">${rec.role || 'N/A'}</span>)</p>
+            <p class="text-slate-400 text-[10px]">⏱️ ${rec.duration} | 🕒 ${rec.time}</p>
+          </div>
+          <button onclick="downloadHistoryZip(${i})" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1">
+            <span>📦</span> ZIP
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function goToDashboardAndRefresh() {
+      renderDashboard();
+      switchPage(2);
+    }
+
+    function resetProfile() {
+      if (confirm('क्या आप प्रोफाइल रीसेट करना चाहते हैं?')) {
+        localStorage.clear();
+        location.reload();
+      }
+    }
+  </script>
 </body>
 </html>
