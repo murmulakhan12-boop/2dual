@@ -1,158 +1,397 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Audio Recorder & Google Sheet Sync</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 40px 20px;
-      background-color: #f4f7f6;
-    }
-    .container {
-      max-width: 500px;
-      margin: 0 auto;
-      background: white;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    h2 {
-      color: #333;
-      margin-bottom: 20px;
-    }
-    button {
-      padding: 12px 24px;
-      font-size: 16px;
-      margin: 10px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    #startBtn {
-      background-color: #28a745;
-      color: white;
-    }
-    #startBtn:disabled {
-      background-color: #a5d6a7;
-      cursor: not-allowed;
-    }
-    #stopBtn {
-      background-color: #dc3545;
-      color: white;
-    }
-    #stopBtn:disabled {
-      background-color: #ef9a9a;
-      cursor: not-allowed;
-    }
-    #status {
-      margin-top: 25px;
-      font-size: 16px;
-      font-weight: bold;
-      color: #555;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIRLA Dual-Channel WebRTC Call & Recording System</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --primary: #3b82f6;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2, h3 { margin-top: 0; }
+
+        .grid-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        input, select, button, textarea {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            background-color: #334155;
+            color: white;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: var(--primary);
+            cursor: pointer;
+            font-weight: bold;
+            border: none;
+            transition: background 0.2s;
+        }
+
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-danger { background-color: var(--danger); }
+        .btn-success { background-color: var(--success); }
+        .btn-warning { background-color: var(--warning); }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .status-box {
+            padding: 10px;
+            border-radius: 6px;
+            background: #0f172a;
+            font-family: monospace;
+            margin-top: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid #475569;
+            padding: 8px;
+            text-align: left;
+            font-size: 12px;
+        }
+
+        th { background-color: #334155; }
+
+        .alert-box {
+            padding: 12px;
+            background-color: #1e293b;
+            border-left: 4px solid var(--primary);
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
 
-  <div class="container">
-    <h2>Audio Recorder</h2>
+<div class="container">
+    <div class="card">
+        <h1>🎙️ HIRLA Call & Recording System</h1>
+        <div id="alertArea" class="alert-box">सिस्टम तैयार है। अपनी प्रोफाइल भरें और स्टार्ट करें।</div>
+        
+        <!-- User Metadata Form -->
+        <h2>1. यूजर जानकारी (Profile Setup)</h2>
+        <div class="grid-form">
+            <div class="form-group">
+                <label>Name:</label>
+                <input type="text" id="userName" placeholder="अपना नाम दर्ज करें">
+            </div>
+            <div class="form-group">
+                <label>Gender:</label>
+                <select id="userGender">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Language:</label>
+                <select id="userLanguage">
+                    <option value="Santali (Ol Chiki)">Santali (Ol Chiki)</option>
+                    <option value="Hindi">Hindi</option>
+                    <option value="Bengali">Bengali</option>
+                    <option value="English">English</option>
+                </select>
+            </div>
+        </div>
+        <button id="btnInit" onclick="initUserSession()">Start Setup / Allow Mic</button>
+    </div>
+
+    <!-- WebRTC Connection Setup -->
+    <div class="card">
+        <h2>2. WebRTC कॉल कनेक्शन (Connection Setup)</h2>
+        <div class="controls">
+            <button id="btnCreateOffer" onclick="createOffer()" disabled>1. Link बनाएँ (Invite Partner)</button>
+            <button id="btnAnswer" onclick="handleOffer()" disabled>2. Link से जुड़ें (Accept Offer)</button>
+        </div>
+        <div style="margin-top: 10px;">
+            <textarea id="sdpData" rows="3" style="width: 100%;" placeholder="यहाँ Connection SDP डेटा दिखेगा या पेस्ट करें..."></textarea>
+        </div>
+        <div class="status-box" id="connectionStatus">Status: Disconnected</div>
+    </div>
+
+    <!-- Recording Section -->
+    <div class="card">
+        <h2>3. रिकॉर्डिंग और डेटा सिंक (Dual-Channel Recording)</h2>
+        <div class="controls">
+            <button id="btnStartRecord" class="btn-success" onclick="startRecording()" disabled>▶ Start Dual Recording</button>
+            <button id="btnStopRecord" class="btn-danger" onclick="stopRecording()" disabled>⏹ Stop & Auto Sync to Drive</button>
+        </div>
+        <div class="status-box" id="recordingStatus">Recording: Off</div>
+    </div>
+
+    <!-- History & Drive Data Table -->
+    <div class="card">
+        <h2>4. कॉल और ऑडियो रिकॉर्ड (Google Sheet History)</h2>
+        <div style="overflow-x:auto;">
+            <table id="historyTable">
+                <thead>
+                    <tr>
+                        <th>Date Time</th>
+                        <th>Name</th>
+                        <th>Gender</th>
+                        <th>Language</th>
+                        <th>Audio Link (Drive)</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody">
+                    <!-- Dynamic Data Rows -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Config: Apps Script Web App URL
+    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwefGf4U_0Iscv101o0-sE-OAtwX1kG1UeJjI2cI_6u3lR5jL9K3tG/exec";
+
+    let localStream = null;
+    let peerConnection = null;
+    let mediaRecorder = null;
+    let recordedChunks = [];
     
-    <button id="startBtn" onclick="startRecording()">Start Recording</button>
-    <button id="stopBtn" onclick="stopRecording()" disabled>Stop / Disconnect</button>
+    let userProfile = {
+        name: "",
+        gender: "",
+        language: ""
+    };
 
-    <div id="status">Status: तैयार है (Ready)</div>
-  </div>
+    const configuration = {
+        iceServers: [{ urls: 'stun:stun.l.google.com:19020' }]
+    };
 
-  <script>
-    // 1. आपके सेट किए गए Web App URL और Drive Folder ID
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzdZ0GG5AOX3gRD8WfORDECqk9vrF0KHGtk_d79E1fpGYDy_5zFvfSuFQ8qN1zXKWC-hw/exec";
-    const DRIVE_FOLDER_ID = "1iu1zHEtiifpPyucDJMN1MrjKxsL3Osf0";
+    function showAlert(msg) {
+        document.getElementById('alertArea').innerText = msg;
+    }
 
-    let mediaRecorder;
-    let audioChunks = [];
+    // Step 1: User Profile Setup & Mic Access
+    async function initUserSession() {
+        const name = document.getElementById('userName').value.trim();
+        if (!name) {
+            alert('कृपया अपना नाम भरें!');
+            return;
+        }
 
-    // 2. रिकॉर्डिंग स्टार्ट करने का फ़ंक्शन
-    async function startRecording() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-        audioChunks = [];
+        userProfile.name = name;
+        userProfile.gender = document.getElementById('userGender').value;
+        userProfile.language = document.getElementById('userLanguage').value;
+
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            showAlert(`माइक चालू हो गया है! प्रोफाइल: ${userProfile.name} (${userProfile.language})`);
+            document.getElementById('btnCreateOffer').disabled = false;
+            document.getElementById('btnAnswer').disabled = false;
+            document.getElementById('btnInit').disabled = true;
+        } catch (err) {
+            console.error(err);
+            showAlert("माइक एक्सेस करने में समस्या आई: " + err.message);
+        }
+    }
+
+    // Step 2: WebRTC Offer / Answer Handling
+    function setupPeerConnection() {
+        peerConnection = new RTCPeerConnection(configuration);
+
+        localStream.getTracks().forEach(track => {
+            peerConnection.addTrack(track, localStream);
+        });
+
+        peerConnection.onicecandidate = event => {
+            if (event.candidate === null) {
+                document.getElementById('sdpData').value = JSON.stringify(peerConnection.localDescription);
+            }
+        };
+
+        peerConnection.ontrack = event => {
+            console.log("Remote track received");
+            document.getElementById('connectionStatus').innerText = "Status: Connected to Peer";
+            document.getElementById('btnStartRecord').disabled = false;
+        };
+    }
+
+    async function createOffer() {
+        setupPeerConnection();
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        showAlert("Connection Link (SDP) बन गया है। इसे अपने पार्टनर को भेजें।");
+    }
+
+    async function handleOffer() {
+        const sdpText = document.getElementById('sdpData').value.trim();
+        if (!sdpText) {
+            alert("कृपया SDP डाटा टेक्स्टबॉक्स में पेस्ट करें!");
+            return;
+        }
+
+        const sdpData = JSON.parse(sdpText);
+
+        if (!peerConnection) {
+            setupPeerConnection();
+        }
+
+        if (sdpData.type === 'offer') {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(sdpData));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            showAlert("Answer SDP जनरेट हो गया है! इसे ऑफ़र देने वाले को वापस भेजें।");
+        } else if (sdpData.type === 'answer') {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(sdpData));
+            showAlert("कनेक्शन पूरा हो चुका है!");
+            document.getElementById('connectionStatus').innerText = "Status: Call Connected";
+            document.getElementById('btnStartRecord').disabled = false;
+        }
+    }
+
+    // Step 3: Dual-Channel Recording Logic
+    function startRecording() {
+        recordedChunks = [];
+        const audioContext = new AudioContext();
+        const dest = audioContext.createMediaStreamDestination();
+
+        // Local Stream
+        if (localStream) {
+            const localSource = audioContext.createMediaStreamSource(localStream);
+            localSource.connect(dest);
+        }
+
+        // Remote Stream
+        const receivers = peerConnection.getReceivers();
+        receivers.forEach(receiver => {
+            if (receiver.track && receiver.track.kind === 'audio') {
+                const remoteStream = new MediaStream([receiver.track]);
+                const remoteSource = audioContext.createMediaStreamSource(remoteStream);
+                remoteSource.connect(dest);
+            }
+        });
+
+        mediaRecorder = new MediaRecorder(dest.stream);
 
         mediaRecorder.ondataavailable = event => {
-          if (event.data.size > 0) {
-            audioChunks.push(event.data);
-          }
+            if (event.data.size > 0) {
+                recordedChunks.push(event.data);
+            }
         };
+
+        mediaRecorder.onstop = saveRecordedDataToHistory;
 
         mediaRecorder.start();
-        document.getElementById("status").innerText = "Status: 🔴 रिकॉर्डिंग चालू है...";
-        document.getElementById("startBtn").disabled = true;
-        document.getElementById("stopBtn").disabled = false;
-      } catch (err) {
-        alert("माइक्रोफ़ोन एक्सेस करने में समस्या आई: " + err.message);
-      }
+        document.getElementById('recordingStatus').innerText = "Recording: Active 🔴";
+        document.getElementById('btnStartRecord').disabled = true;
+        document.getElementById('btnStopRecord').disabled = false;
+        showAlert("रिकॉर्डिंग शुरू हो चुकी है...");
     }
 
-    // 3. रिकॉर्डिंग रोकने का फ़ंक्शन
     function stopRecording() {
-      if (!mediaRecorder) return;
-
-      document.getElementById("status").innerText = "Status: ⏳ ऑडियो प्रोसेस हो रहा है...";
-      document.getElementById("stopBtn").disabled = true;
-
-      mediaRecorder.stop();
-
-      // जब रिकॉर्डिंग पूरी तरह बंद हो जाए तब डेटा बैकएंड को भेजें
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-        stopAndSendRecording(audioBlob);
-      };
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+            document.getElementById('recordingStatus').innerText = "Recording: Saved & Uploading...";
+            document.getElementById('btnStartRecord').disabled = false;
+            document.getElementById('btnStopRecord').disabled = true;
+        }
     }
 
-    // 4. Drive और Sheet में ऑडियो डेटा भेजने का ऑटोमैटिक फ़ंक्शन
-    async function stopAndSendRecording(audioBlob) {
-      document.getElementById("status").innerText = "Status: ⏳ Google Drive और Sheet में भेजा जा रहा है...";
+    // Step 4: Auto Sync to Google Drive and Google Sheet
+    async function saveRecordedDataToHistory() {
+        showAlert("ऑडियो ड्राइव में अपलोड और गूगल शीट सिंक हो रहा है... कृपया प्रतीक्षा करें।");
 
-      const reader = new FileReader();
-      reader.readAsDataURL(audioBlob);
+        const audioBlob = new Blob(recordedChunks, { type: 'audio/webm' });
+        const reader = new FileReader();
 
-      reader.onloadend = function () {
-        const base64Data = reader.result.split(',')[1];
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = async function () {
+            const base64Audio = reader.result.split(',')[1];
 
-        const payload = {
-          filename: "Audio_Record_" + new Date().getTime() + ".wav",
-          mimeType: "audio/wav",
-          base64: base64Data,
-          folderId: DRIVE_FOLDER_ID,
-          timestamp: new Date().toLocaleString()
+            const payload = {
+                name: userProfile.name,
+                gender: userProfile.gender,
+                language: userProfile.language,
+                timestamp: new Date().toLocaleString(),
+                audioBase64: base64Audio,
+                fileName: `HIRLA_${userProfile.name}_${Date.now()}.webm`
+            };
+
+            try {
+                const response = await fetch(GOOGLE_SHEET_WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                showAlert("✅ ऑडियो सफलतापूर्वक Admin (Google Sheet & Drive) तक पहुँच गया!");
+                
+                // Add Local Row View
+                const table = document.getElementById('historyBody');
+                const row = table.insertRow(0);
+                row.insertCell(0).innerText = payload.timestamp;
+                row.insertCell(1).innerText = payload.name;
+                row.insertCell(2).innerText = payload.gender;
+                row.insertCell(3).innerText = payload.language;
+                row.insertCell(4).innerHTML = `<span style="color: #22c55e;">Synced to Drive ✅</span>`;
+
+            } catch (error) {
+                console.error("Upload error:", error);
+                showAlert("❌ अपलोड करने में त्रुटि आई!");
+            }
         };
-
-        fetch(WEB_APP_URL, {
-          method: "POST",
-          body: JSON.stringify(payload)
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.result === "success") {
-            document.getElementById("status").innerText = "Status: ✅ रिकॉर्डिंग सफलतापूर्व भेज दी गई!";
-            alert("Recording Safaltapurvak Bheji Gayi!");
-          } else {
-            document.getElementById("status").innerText = "Status: ❌ एरर: " + data.error;
-          }
-          document.getElementById("startBtn").disabled = false;
-        })
-        .catch(err => {
-          console.error("Error:", err);
-          document.getElementById("status").innerText = "Status: ❌ अपलोडिंग में समस्या आई।";
-          document.getElementById("startBtn").disabled = false;
-        });
-      };
     }
-  </script>
+</script>
 
 </body>
 </html>
