@@ -331,7 +331,7 @@
   </div>
 
   <script>
-    // 🔗 UPDATED NEW GOOGLE SHEET WEB APP URL
+    // 🔗 GOOGLE SHEET WEB APP URL
     const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby0hce16giNRoUlkqknHgGy7ZnJy4kLrPfhZ9DmD4y4kR5Obx1JPg50v5FLcIJIYZhdgQ/exec";
 
     let userData = {};
@@ -736,9 +736,8 @@
       if (localRecorder && localRecorder.state !== 'inactive') localRecorder.stop();
       if (remoteRecorder && remoteRecorder.state !== 'inactive') remoteRecorder.stop();
 
-      setTimeout(async () => {
-        saveRecordedDataToHistory();
-      }, 500);
+      // तुरंत डेटा हिस्ट्री और गूगल शीट पर भेजें
+      saveRecordedDataToHistory();
 
       document.getElementById('rec-status-badge').textContent = "Stopped";
       document.getElementById('rec-status-badge').className = "text-xs bg-slate-700 px-2.5 py-1 rounded-full text-slate-400";
@@ -748,10 +747,6 @@
 
       document.getElementById('receiver-rec-indicator').textContent = "Mic: Idle";
       document.getElementById('receiver-rec-indicator').className = "text-[10px] text-slate-400 font-mono";
-
-      const banner = document.getElementById('waiting-banner');
-      banner.textContent = "⏹️ Dual Recording Completed & Uploading...";
-      banner.className = "text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
 
       if (isHost) {
         document.getElementById('btn-start-rec').disabled = false;
@@ -763,15 +758,16 @@
 
     async function saveRecordedDataToHistory() {
       if (historySaved) return;
-      if (localChunks.length === 0) return;
-
       historySaved = true;
-      localAudioBlob = new Blob(localChunks, { type: 'audio/wav' });
-      remoteAudioBlob = remoteChunks.length > 0 ? new Blob(remoteChunks, { type: 'audio/wav' }) : localAudioBlob;
 
-      document.getElementById('dl-local').href = URL.createObjectURL(localAudioBlob);
-      document.getElementById('dl-remote').href = URL.createObjectURL(remoteAudioBlob);
-      document.getElementById('download-section').classList.remove('hidden');
+      if (localChunks.length > 0) {
+        localAudioBlob = new Blob(localChunks, { type: 'audio/wav' });
+        remoteAudioBlob = remoteChunks.length > 0 ? new Blob(remoteChunks, { type: 'audio/wav' }) : localAudioBlob;
+
+        document.getElementById('dl-local').href = URL.createObjectURL(localAudioBlob);
+        document.getElementById('dl-remote').href = URL.createObjectURL(remoteAudioBlob);
+        document.getElementById('download-section').classList.remove('hidden');
+      }
 
       if (isHost) {
         callerCallsCount++;
@@ -781,9 +777,6 @@
         receiverTotalSeconds += seconds;
       }
 
-      const localBase64 = await blobToBase64(localAudioBlob);
-      const remoteBase64 = await blobToBase64(remoteAudioBlob);
-
       const record = {
         id: currentPairId || 'PAIR-DISCONNECTED',
         user: userData.name || 'User',
@@ -792,16 +785,16 @@
         duration: document.getElementById('timer').textContent,
         durationSeconds: seconds,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        date: new Date().toLocaleDateString(),
-        localData: localBase64,
-        remoteData: remoteBase64
+        date: new Date().toLocaleDateString()
       };
 
+      // 1. तुरंत गूगल शीट पर भेजें
+      sendDataToGoogleSheet(record);
+
+      // 2. तुरंत लोकल हिस्ट्री में सेव करें
       callHistory.unshift(record);
       saveHistoryData();
       updateHistoryUI();
-
-      sendDataToGoogleSheet(record);
     }
 
     function sendDataToGoogleSheet(record) {
@@ -814,20 +807,19 @@
 
       const banner = document.getElementById('waiting-banner');
       if (banner) {
-        banner.textContent = "⏳ Admin (Google Drive) को ऑडियो भेजा जा रहा है...";
+        banner.textContent = "⏳ Google Sheet को डेटा भेजा जा रहा है...";
+        banner.className = "text-xs text-amber-400 bg-amber-950/40 border border-amber-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
       }
 
       const sheetPayload = {
         pairId: record.id || '',
-        userName: userData.name || '',
-        role: isHost ? 'Caller' : 'Receiver',
+        userName: record.user || '',
+        role: record.role || '',
         lang: record.lang || '',
         durationSeconds: record.durationSeconds || 0,
         durationFormatted: formattedDuration,
         date: record.date || '',
         time: record.time || '',
-        localAudioBase64: record.localData || '',
-        remoteAudioBase64: record.remoteData || '',
         accHolder: bankData ? (bankData.accHolder || '') : '',
         bankName: bankData ? (bankData.bankName || '') : '',
         branch: bankData ? (bankData.branch || '') : '',
@@ -843,12 +835,18 @@
         body: JSON.stringify(sheetPayload)
       })
       .then(() => {
-        console.log("Successfully sent audio & details to Google Drive & Sheet");
+        console.log("Data sent to Google Sheet successfully");
         if (banner) {
-          banner.textContent = "✅ ऑडियो सफ़लतापूर्वक Admin (Google Sheet) तक पहुँच गया!";
+          banner.textContent = "✅ डेटा सफ़लतापूर्वक Google Sheet पर भेज दिया गया!";
+          banner.className = "text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
         }
       })
-      .catch(err => console.error("Error sending to Google Sheet:", err));
+      .catch(err => {
+        console.error("Error sending to Google Sheet:", err);
+        if (banner) {
+          banner.textContent = "❌ Google Sheet डेटा ट्रांसफर एरर";
+        }
+      });
     }
 
     function disconnectCall(sendSignal = true) {
@@ -890,7 +888,7 @@
       document.getElementById('rec-status-badge').className = "text-xs bg-amber-950 text-amber-400 border border-amber-800 px-2.5 py-1 rounded-full";
 
       const banner = document.getElementById('waiting-banner');
-      banner.textContent = "⚠️ Signal Lost! Saving recorded audio...";
+      banner.textContent = "⚠️ Signal Lost! Data Saved.";
       banner.className = "text-xs text-amber-400 bg-amber-950/40 border border-amber-800/60 py-1.5 px-4 rounded-full inline-block font-medium";
     }
 
@@ -907,14 +905,6 @@
     }
 
     function stopTimer() { clearInterval(timerInterval); }
-
-    function blobToBase64(blob) {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(blob);
-      });
-    }
 
     function downloadCurrentZip() {
       if (!localAudioBlob) return alert("Audio files missing.");
@@ -949,47 +939,6 @@ Company / Platform: HIRLA
       });
     }
 
-    function downloadHistoryZip(index) {
-      const record = callHistory[index];
-      if (!record || !record.localData) return alert("Audio record missing.");
-
-      const zip = new JSZip();
-      const localBlob = dataURItoBlob(record.localData);
-      const remoteBlob = record.remoteData ? dataURItoBlob(record.remoteData) : localBlob;
-
-      zip.file(`Local_Audio_${record.id}.wav`, localBlob);
-      zip.file(`Remote_Audio_${record.id}.wav`, remoteBlob);
-
-      const metadataContent = 
-`==============================================
-          HIRLA DUAL RECORDING DETAILS        
-==============================================
-Pair ID: ${record.id}
-User Name: ${record.user}
-Role: ${record.role || 'N/A'}
-Language: ${record.lang}
-Duration: ${record.duration}
-Recorded Date: ${record.date || 'N/A'}
-Recorded Time: ${record.time || 'N/A'}
-Company / Platform: HIRLA
-==============================================`;
-
-      zip.file(`Details_${record.id}.txt`, metadataContent);
-
-      zip.generateAsync({ type: "blob" }).then(content => {
-        saveAs(content, `${record.id}_${record.lang}_HIRLA.zip`);
-      });
-    }
-
-    function dataURItoBlob(dataURI) {
-      const byteString = atob(dataURI.split(',')[1]);
-      const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
-      const ab = new ArrayBuffer(byteString.length);
-      const ia = new Uint8Array(ab);
-      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-      return new Blob([ab], { type: mimeString });
-    }
-
     function saveHistoryData() {
       localStorage.setItem('rec_caller_count', callerCallsCount);
       localStorage.setItem('rec_receiver_count', receiverCallsCount);
@@ -997,7 +946,7 @@ Company / Platform: HIRLA
       localStorage.setItem('rec_receiver_sec', receiverTotalSeconds);
 
       try {
-        localStorage.setItem('rec_history_list', JSON.stringify(callHistory.slice(0, 10)));
+        localStorage.setItem('rec_history_list', JSON.stringify(callHistory.slice(0, 30)));
       } catch(e) {}
     }
 
@@ -1036,7 +985,7 @@ Company / Platform: HIRLA
         return;
       }
 
-      historyList.innerHTML = callHistory.map((rec, i) => `
+      historyList.innerHTML = callHistory.map((rec) => `
         <div class="bg-slate-900/90 border border-slate-700/80 p-3 rounded-xl flex items-center justify-between text-xs transition hover:border-slate-600">
           <div class="space-y-1">
             <div class="flex items-center gap-2">
@@ -1044,11 +993,9 @@ Company / Platform: HIRLA
               <span class="bg-slate-800 text-amber-300 font-mono text-[10px] px-2 py-0.5 rounded border border-slate-700">${rec.lang}</span>
             </div>
             <p class="text-slate-300 text-[11px]">👤 ${rec.user || 'N/A'} (<span class="text-indigo-400 font-medium">${rec.role || 'N/A'}</span>)</p>
-            <p class="text-slate-400 text-[10px]">⏱️ ${rec.duration} | 🕒 ${rec.time}</p>
+            <p class="text-slate-400 text-[10px]">⏱️ ${rec.duration} | 📅 ${rec.date} 🕒 ${rec.time}</p>
           </div>
-          <button onclick="downloadHistoryZip(${i})" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1">
-            <span>📦</span> ZIP
-          </button>
+          <span class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-1 rounded">Sheet Synced</span>
         </div>
       `).join('');
     }
