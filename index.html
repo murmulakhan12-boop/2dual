@@ -344,6 +344,10 @@
     let localStream = null;
     let remoteStream = null;
 
+    // Active names store for formatting file name
+    let hostNameStr = "Host";
+    let partnerNameStr = "Partner";
+
     let localRecorder, remoteRecorder;
     let localChunks = [], remoteChunks = [];
     let localAudioBlob = null, remoteAudioBlob = null;
@@ -377,6 +381,23 @@
         sdpSemantics: 'unified-plan'
       }
     };
+
+    // Helper: Formats current date-time for File Name (e.g., 01-08-2026_23-30-15)
+    function getFormattedDateTime(d = new Date()) {
+      const pad = n => String(n).padStart(2, '0');
+      const day = pad(d.getDate());
+      const month = pad(d.getMonth() + 1);
+      const year = d.getFullYear();
+      const hours = pad(d.getHours());
+      const mins = pad(d.getMinutes());
+      const secs = pad(d.getSeconds());
+      return `${day}-${month}-${year}_${hours}-${mins}-${secs}`;
+    }
+
+    // Helper: Clean string for safe file name
+    function cleanFileNameStr(str) {
+      return (str || 'Unknown').trim().replace(/[^a-zA-Z0-9]/g, '_');
+    }
 
     async function getCleanAudioStream() {
       return await navigator.mediaDevices.getUserMedia({
@@ -509,6 +530,9 @@
 
     async function enterRecordingRoom() {
       isHost = true;
+      hostNameStr = userData.name || "Host";
+      partnerNameStr = "Partner";
+
       historySaved = false;
       userDisconnectedManual = false;
       connectRetryCount = 0;
@@ -531,6 +555,9 @@
 
     async function startDirectGuestJoin(pairId, langName) {
       isHost = false; 
+      partnerNameStr = userData.name || "Partner";
+      hostNameStr = "Host";
+
       historySaved = false;
       userDisconnectedManual = false;
       connectRetryCount = 0;
@@ -635,15 +662,22 @@
       if (!peerConn) return;
 
       peerConn.on('open', () => {
-        peerConn.send({ type: 'JOINED' });
+        peerConn.send({ type: 'JOINED', name: userData.name || '' });
       });
 
       peerConn.on('data', (data) => {
         if (data.type === 'JOINED') {
           if (isHost) {
-            document.getElementById('room-receiver-name').textContent = 'Connected Partner';
+            if (data.name) partnerNameStr = data.name;
+            document.getElementById('room-receiver-name').textContent = data.name ? data.name : 'Connected Partner';
+            peerConn.send({ type: 'HOST_INFO', name: userData.name || '' });
           }
           markConnectedState();
+        } else if (data.type === 'HOST_INFO') {
+          if (!isHost && data.name) {
+            hostNameStr = data.name;
+            document.getElementById('room-caller-name').textContent = data.name;
+          }
         } else if (data.type === 'START_REC') {
           executeStartRecording();
         } else if (data.type === 'STOP_REC') {
@@ -769,8 +803,26 @@
       localAudioBlob = new Blob(localChunks, { type: 'audio/wav' });
       remoteAudioBlob = remoteChunks.length > 0 ? new Blob(remoteChunks, { type: 'audio/wav' }) : localAudioBlob;
 
-      document.getElementById('dl-local').href = URL.createObjectURL(localAudioBlob);
-      document.getElementById('dl-remote').href = URL.createObjectURL(remoteAudioBlob);
+      const formattedDt = getFormattedDateTime();
+      const hostClean = cleanFileNameStr(hostNameStr);
+      const partnerClean = cleanFileNameStr(partnerNameStr);
+
+      const localFileName = isHost 
+        ? `${hostClean}-${partnerClean}-${formattedDt}_Host.wav`
+        : `${hostClean}-${partnerClean}-${formattedDt}_Partner.wav`;
+
+      const remoteFileName = isHost 
+        ? `${hostClean}-${partnerClean}-${formattedDt}_Partner.wav`
+        : `${hostClean}-${partnerClean}-${formattedDt}_Host.wav`;
+
+      const dlLocalElem = document.getElementById('dl-local');
+      dlLocalElem.href = URL.createObjectURL(localAudioBlob);
+      dlLocalElem.download = localFileName;
+
+      const dlRemoteElem = document.getElementById('dl-remote');
+      dlRemoteElem.href = URL.createObjectURL(remoteAudioBlob);
+      dlRemoteElem.download = remoteFileName;
+
       document.getElementById('download-section').classList.remove('hidden');
 
       if (isHost) {
@@ -787,12 +839,15 @@
       const record = {
         id: currentPairId || 'PAIR-DISCONNECTED',
         user: userData.name || 'User',
+        hostName: hostClean,
+        partnerName: partnerClean,
         role: isHost ? 'Caller' : 'Receiver',
         lang: userData.lang || 'SANTALI',
         duration: document.getElementById('timer').textContent,
         durationSeconds: seconds,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         date: new Date().toLocaleDateString(),
+        formattedDateTime: formattedDt,
         localData: localBase64,
         remoteData: remoteBase64
       };
@@ -820,12 +875,15 @@
       const sheetPayload = {
         pairId: record.id || '',
         userName: userData.name || '',
+        hostName: record.hostName || '',
+        partnerName: record.partnerName || '',
         role: isHost ? 'Caller' : 'Receiver',
         lang: record.lang || '',
         durationSeconds: record.durationSeconds || 0,
         durationFormatted: formattedDuration,
         date: record.date || '',
         time: record.time || '',
+        formattedDateTime: record.formattedDateTime || getFormattedDateTime(),
         localAudioBase64: record.localData || '',
         remoteAudioBase64: record.remoteData || '',
         accHolder: bankData ? (bankData.accHolder || '') : '',
@@ -920,18 +978,29 @@
       if (!localAudioBlob) return alert("Audio files missing.");
       const zip = new JSZip();
       
-      const hostName = isHost ? "Caller" : "Receiver";
-      const remoteName = isHost ? "Receiver" : "Caller";
+      const hostClean = cleanFileNameStr(hostNameStr);
+      const partnerClean = cleanFileNameStr(partnerNameStr);
+      const formattedDt = getFormattedDateTime();
 
-      zip.file(`${hostName}_Audio_${currentPairId}.wav`, localAudioBlob);
-      if (remoteAudioBlob) {
-        zip.file(`${remoteName}_Audio_${currentPairId}.wav`, remoteAudioBlob);
+      const zipName = `${hostClean}-${partnerClean}-${formattedDt}.zip`;
+
+      const hostFileName = `${hostClean}-${partnerClean}-${formattedDt}_Host.wav`;
+      const partnerFileName = `${hostClean}-${partnerClean}-${formattedDt}_Partner.wav`;
+
+      if (isHost) {
+        zip.file(hostFileName, localAudioBlob);
+        if (remoteAudioBlob) zip.file(partnerFileName, remoteAudioBlob);
+      } else {
+        zip.file(partnerFileName, localAudioBlob);
+        if (remoteAudioBlob) zip.file(hostFileName, remoteAudioBlob);
       }
 
       const metadataContent = 
 `==============================================
           HIRLA DUAL RECORDING DETAILS        
 ==============================================
+Host Name: ${hostNameStr}
+Partner Name: ${partnerNameStr}
 Pair ID: ${currentPairId}
 User Name: ${userData.name || 'User'}
 Role: ${isHost ? 'Caller' : 'Receiver'}
@@ -942,10 +1011,10 @@ Recorded Time: ${new Date().toLocaleTimeString()}
 Company / Platform: HIRLA
 ==============================================`;
 
-      zip.file(`Details_${currentPairId}.txt`, metadataContent);
+      zip.file(`Details_${hostClean}-${partnerClean}-${formattedDt}.txt`, metadataContent);
 
       zip.generateAsync({ type: "blob" }).then(content => {
-        saveAs(content, `${currentPairId}_HIRLA_DualAudio.zip`);
+        saveAs(content, zipName);
       });
     }
 
@@ -957,13 +1026,29 @@ Company / Platform: HIRLA
       const localBlob = dataURItoBlob(record.localData);
       const remoteBlob = record.remoteData ? dataURItoBlob(record.remoteData) : localBlob;
 
-      zip.file(`Local_Audio_${record.id}.wav`, localBlob);
-      zip.file(`Remote_Audio_${record.id}.wav`, remoteBlob);
+      const hostClean = record.hostName || "Host";
+      const partnerClean = record.partnerName || "Partner";
+      const formattedDt = record.formattedDateTime || getFormattedDateTime();
+
+      const zipName = `${hostClean}-${partnerClean}-${formattedDt}.zip`;
+
+      const hostFileName = `${hostClean}-${partnerClean}-${formattedDt}_Host.wav`;
+      const partnerFileName = `${hostClean}-${partnerClean}-${formattedDt}_Partner.wav`;
+
+      if (record.role === 'Caller') {
+        zip.file(hostFileName, localBlob);
+        zip.file(partnerFileName, remoteBlob);
+      } else {
+        zip.file(partnerFileName, localBlob);
+        zip.file(hostFileName, remoteBlob);
+      }
 
       const metadataContent = 
 `==============================================
           HIRLA DUAL RECORDING DETAILS        
 ==============================================
+Host Name: ${hostClean}
+Partner Name: ${partnerClean}
 Pair ID: ${record.id}
 User Name: ${record.user}
 Role: ${record.role || 'N/A'}
@@ -974,10 +1059,10 @@ Recorded Time: ${record.time || 'N/A'}
 Company / Platform: HIRLA
 ==============================================`;
 
-      zip.file(`Details_${record.id}.txt`, metadataContent);
+      zip.file(`Details_${hostClean}-${partnerClean}-${formattedDt}.txt`, metadataContent);
 
       zip.generateAsync({ type: "blob" }).then(content => {
-        saveAs(content, `${record.id}_${record.lang}_HIRLA.zip`);
+        saveAs(content, zipName);
       });
     }
 
